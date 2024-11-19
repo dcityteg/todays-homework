@@ -42,7 +42,7 @@ const checkAndCreateTable = async () => {
 };
 
 // 在应用启动时调用，确保数据库表存在
-checkAndCreateTable();
+//checkAndCreateTable();
 
 // 根路径 `/` 显示今日作业
 app.get('/', async (req, res) => {
