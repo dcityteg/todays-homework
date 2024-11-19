@@ -25,7 +25,6 @@ app.get('/', (req, res) => {
             <h1>今日作业</h1>
             <textarea rows="10" cols="50" readonly>${homework}</textarea>
             <br>
-            <a href="/api/setc">重新设置作业</a>
         </body>
         </html>
     `);
@@ -43,7 +42,7 @@ app.get('/setc', (req, res) => {
         </head>
         <body>
             <h1>设置今日作业</h1>
-            <form method="POST" action="/api/setc">
+            <form method="POST" action="/setc">
                 <textarea name="homework" rows="10" cols="50" placeholder="输入今日作业"></textarea>
                 <br>
                 <button type="submit">提交</button>
