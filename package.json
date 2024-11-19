@@ -1,14 +1,16 @@
 {
-  "name": "my-node-app",
+  "name": "vercel-edge-config-app",
   "version": "1.0.0",
   "scripts": {
-    "dev": "vercel dev", 
-    "start": "node api/index.js"  // 你的 Node.js 入口文件
+    "dev": "vercel dev",
+    "start": "node api/index.js"
   },
   "dependencies": {
-    "express": "^4.17.1", // 假设你用的是 Express
-    "pg": "^8.7.1",  // PostgreSQL 客户端
-    "mongodb": "^4.1.0",  // MongoDB 客户端（如果你使用 MongoDB）
+    "express": "^4.17.1",
+    "marked": "^4.0.12",
     "@vercel/edge-config": "^1.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^39.0.0"
   }
 }
