@@ -1,7 +1,7 @@
 {
   "name": "vercel-fff",
   "version": "1.0.0",
-  "type": "module",  
+  "type": "commonjs",  
   "scripts": {
     "dev": "vercel dev",
     "start": "node api/index.js"

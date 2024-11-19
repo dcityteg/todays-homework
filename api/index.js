@@ -1,8 +1,8 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import path from 'path';
-import { marked } from 'marked';
-import { Pool } from 'pg';  // 引入 PostgreSQL 客户端
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const { marked } = require('marked');
+const { Pool } = require('pg');  // 使用 CommonJS 的方式引入 pg 模块
 
 const app = express();
 
@@ -123,4 +123,4 @@ process.on('SIGINT', async () => {
     process.exit();
 });
 
-export default app;
+module.exports = app;
