@@ -13,6 +13,12 @@ app.use(express.json());
 // 配置 src 文件夹为静态资源目录
 app.use(express.static(path.join(__dirname, '../src')));
 
+// 设置 marked 的配置
+marked.setOptions({
+    gfm: true, // 启用 GitHub 风格 Markdown
+    breaks: true // 将单个换行符解析为 <br>
+});
+
 // 根路径 `/` 显示今日作业
 app.get('/', (req, res) => {
     const renderedHomework = marked(homework); // 将 Markdown 转换为 HTML
