@@ -2,22 +2,25 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { marked } = require('marked');
-const edgeConfig = require('@vercel/edge-config');
 
 const app = express();
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 配置 marked 的设置
+// 配置 src 文件夹为静态资源目录
+app.use(express.static(path.join(__dirname, '../src')));
+
+// 设置 marked 的配置
 marked.setOptions({
-    gfm: true,  // 启用 GitHub 风格 Markdown
-    breaks: true  // 将单个换行符解析为 <br>
+    gfm: true,
+    breaks: true
 });
 
 // 根路径 `/` 显示今日作业
-app.get('/', async (req, res) => {
-    const homework = await edgeConfig.get('homework') || '';  // 从 Edge Config 获取作业内容
-    const renderedHomework = marked(homework);  // 将作业内容转化为 HTML
+app.get('/', (req, res) => {
+    const homework = process.env.HOMEWORK || ''; // 从环境变量读取作业内容
+    const renderedHomework = marked(homework);
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
@@ -64,9 +67,9 @@ app.get('/setc', (req, res) => {
 });
 
 // 接收作业内容
-app.post('/setc', async (req, res) => {
+app.post('/setc', (req, res) => {
     const homework = req.body.homework || '（无内容）';
-    await edgeConfig.set('homework', homework);  // 将作业内容存入 Edge Config
+    process.env.HOMEWORK = homework; // 临时设置环境变量（只对当前运行实例有效）
     res.send(`
         <h1>作业已更新！</h1>
         <p>点击 <a href="/">这里</a> 查看今日作业。</p>
