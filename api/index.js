@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";  // Correct way to import Analytics
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -38,7 +39,6 @@ app.get('/', (req, res) => {
             <h1>今日作业</h1>
             <div>${renderedHomework || '<p>暂无作业内容</p>'}</div>
             <br>
-            <a href="/api/setc">重新设置作业</a>
         </body>
         </html>
     `);
