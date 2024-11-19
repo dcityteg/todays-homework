@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { marked } = require('marked');
-const { Pool } = require('pg');  // 使用 CommonJS 的方式引入 pg 模块
+const { Pool } = require('pg');
 
 const app = express();
 
@@ -49,7 +49,9 @@ app.get('/', async (req, res) => {
     try {
         // 从 PostgreSQL 数据库获取作业内容
         const result = await pool.query('SELECT content FROM homework WHERE id = $1', [1]);  // 假设作业内容存储在 `homework` 表中，id=1
-        const homework = result.rows.length > 0 ? result.rows[0].content : ''; // 默认值为空字符串
+        console.log('查询结果:', result.rows);  // 输出查询结果，确认是否能查询到数据
+
+        const homework = result.rows.length > 0 ? result.rows[0].content : '';
         const renderedHomework = marked(homework);
         
         res.send(`
@@ -103,6 +105,7 @@ app.get('/setc', (req, res) => {
 // 接收作业内容并存储到 PostgreSQL
 app.post('/setc', async (req, res) => {
     const homework = req.body.homework || '（无内容）';
+    console.log('提交的作业内容:', homework);  // 输出提交的作业内容进行调试
 
     try {
         // 将作业内容存储到 PostgreSQL
