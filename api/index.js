@@ -1,8 +1,8 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const { marked } = require('marked');
-const { Pool } = require('pg');  // 引入 PostgreSQL 客户端
+import express from 'express';
+import bodyParser from 'body-parser';
+import path from 'path';
+import { marked } from 'marked';
+import { Pool } from 'pg';  // 引入 PostgreSQL 客户端
 
 const app = express();
 
@@ -123,4 +123,4 @@ process.on('SIGINT', async () => {
     process.exit();
 });
 
-module.exports = app;
+export default app;
