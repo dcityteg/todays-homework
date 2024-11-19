@@ -1,11 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 const { marked } = require('marked');
 
 const app = express();
+const homeworkFile = path.join(__dirname, '../homework.txt'); // 定义作业文件路径
 
-let homework = ''; // 存储作业内容（Markdown 格式）
+// 如果文件不存在，则创建一个空的作业文件
+if (!fs.existsSync(homeworkFile)) {
+    fs.writeFileSync(homeworkFile, '');
+}
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -21,6 +26,7 @@ marked.setOptions({
 
 // 根路径 `/` 显示今日作业
 app.get('/', (req, res) => {
+    const homework = fs.readFileSync(homeworkFile, 'utf-8'); // 读取文件中的作业内容
     const renderedHomework = marked(homework); // 将 Markdown 转换为 HTML
     res.send(`
         <!DOCTYPE html>
@@ -68,7 +74,8 @@ app.get('/setc', (req, res) => {
 
 // 接收作业内容
 app.post('/setc', (req, res) => {
-    homework = req.body.homework || '（无内容）';
+    const homework = req.body.homework || '（无内容）';
+    fs.writeFileSync(homeworkFile, homework); // 将作业内容写入文件
     res.send(`
         <h1>作业已更新！</h1>
         <p>点击 <a href="/">这里</a> 查看今日作业。</p>
