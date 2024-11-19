@@ -56,7 +56,7 @@ app.get('/setc', (req, res) => {
         </head>
         <body>
             <h1>设置今日作业</h1>
-            <form method="POST" action="/api/setc">
+            <form method="POST" action="/setc">
                 <textarea name="homework" rows="10" cols="50" placeholder="输入Markdown格式的作业内容"></textarea>
                 <br>
                 <button type="submit">提交</button>
