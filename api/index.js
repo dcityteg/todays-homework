@@ -49,6 +49,7 @@ app.get('/', async (req, res) => {
     try {
         // 从 PostgreSQL 数据库获取作业内容
         const result = await pool.query('SELECT content FROM homework WHERE id = $1', [1]);  // 假设作业内容存储在 `homework` 表中，id=1
+        console.log('查询结果:', result.rows); 
         const homework = result.rows.length > 0 ? result.rows[0].content : ''; // 默认值为空字符串
         const renderedHomework = marked(homework);
         
