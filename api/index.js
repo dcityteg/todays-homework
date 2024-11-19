@@ -1,4 +1,3 @@
-import { Analytics } from "@vercel/analytics/react";  // Correct way to import Analytics
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
