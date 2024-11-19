@@ -21,7 +21,6 @@ app.get('/', (req, res) => {
             <h1>今日作业</h1>
             <textarea rows="10" cols="50" readonly>${homework}</textarea>
             <br>
-            <a href="/api/setc">重新设置作业</a>
         </body>
         </html>
     `);
