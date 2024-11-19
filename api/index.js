@@ -1,9 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const { marked } = require('marked');
+
 const app = express();
 
-let homework = ''; // 存储作业内容
+let homework = ''; // 存储作业内容（Markdown 格式）
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -13,6 +15,7 @@ app.use(express.static(path.join(__dirname, '../src')));
 
 // 根路径 `/` 显示今日作业
 app.get('/', (req, res) => {
+    const renderedHomework = marked(homework); // 将 Markdown 转换为 HTML
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
@@ -20,10 +23,15 @@ app.get('/', (req, res) => {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Today's Homework</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+                img { max-width: 100%; height: auto; }
+            </style>
         </head>
         <body>
             <h1>今日作业</h1>
-            <textarea rows="10" cols="50" readonly>${homework}</textarea>
+            <div>${renderedHomework || '<p>暂无作业内容</p>'}</div>
             <br>
         </body>
         </html>
@@ -43,7 +51,7 @@ app.get('/setc', (req, res) => {
         <body>
             <h1>设置今日作业</h1>
             <form method="POST" action="/setc">
-                <textarea name="homework" rows="10" cols="50" placeholder="输入今日作业"></textarea>
+                <textarea name="homework" rows="10" cols="50" placeholder="输入Markdown格式的作业内容"></textarea>
                 <br>
                 <button type="submit">提交</button>
             </form>
