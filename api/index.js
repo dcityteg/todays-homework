@@ -1,11 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 const app = express();
 
 let homework = ''; // 存储作业内容
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+
+// 配置 src 文件夹为静态资源目录
+app.use(express.static(path.join(__dirname, '../src')));
 
 // 根路径 `/` 显示今日作业
 app.get('/', (req, res) => {
@@ -21,6 +25,7 @@ app.get('/', (req, res) => {
             <h1>今日作业</h1>
             <textarea rows="10" cols="50" readonly>${homework}</textarea>
             <br>
+            <a href="/api/setc">重新设置作业</a>
         </body>
         </html>
     `);
