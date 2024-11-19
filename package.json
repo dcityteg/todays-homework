@@ -1,5 +1,5 @@
 {
-  "name": "vercel-edge-config-app",
+  "name": "vercel-fff",
   "version": "1.0.0",
   "type": "module",  // 允许使用 ES 模块语法
   "scripts": {
