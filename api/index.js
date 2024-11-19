@@ -39,7 +39,7 @@ app.post('/setc', (req, res) => {
 });
 
 // `/todaytd` 路由 - 显示作业
-app.get('/todaytd', (req, res) => {
+app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
