@@ -1,6 +1,7 @@
 {
   "name": "vercel-edge-config-app",
   "version": "1.0.0",
+  "type": "module",  // 允许使用 ES 模块语法
   "scripts": {
     "dev": "vercel dev",
     "start": "node api/index.js"
@@ -8,7 +9,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "marked": "^4.0.12",
-    "@vercel/edge-config": "^1.0.0"
+    "@vercel/edge-config": "^1.0.0",
+    "pg": "^8.9.0"  // 添加 PostgreSQL 客户端依赖
   },
   "devDependencies": {
     "vercel": "^39.0.0"
