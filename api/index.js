@@ -1,18 +1,19 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const multer = require('multer');
 const { marked } = require('marked');
 const { Pool } = require('pg');
 const DOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 
-// 初始化 DOMPurify，用于防止 XSS
+// 初始化 DOMPurify
 const window = new JSDOM('').window;
 const DOMPurifyInstance = DOMPurify(window);
 
 const app = express();
 
-// 初始化 PostgreSQL 连接池，使用 Vercel 设置的 DATABASE_URL 环境变量
+// 初始化 PostgreSQL 连接池
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
@@ -20,43 +21,53 @@ const pool = new Pool({
     idleTimeoutMillis: 30000,
 });
 
+// 配置静态资源路径和中间件
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-
-// 配置 /src 文件夹为静态资源目录
 app.use(express.static(path.join(__dirname, '../src')));
 
-// 设置 marked 的配置
-marked.setOptions({
-    gfm: true,
-    breaks: true,
-});
+// 配置 multer 用于处理文件上传
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// 检查并创建 `homework` 表（如果不存在）
-const checkAndCreateTable = async () => {
-    const createTableQuery = `
+// 检查并创建数据库表
+const checkAndCreateTables = async () => {
+    const createHomeworkTableQuery = `
         CREATE TABLE IF NOT EXISTS homework (
             id SERIAL PRIMARY KEY,
             content TEXT NOT NULL CHECK (length(content) > 0)
         );
     `;
+
+    const createHomeworkImagesTableQuery = `
+        CREATE TABLE IF NOT EXISTS homework_images (
+            id SERIAL PRIMARY KEY,
+            homework_id INT NOT NULL REFERENCES homework(id) ON DELETE CASCADE,
+            image_data BYTEA NOT NULL
+        );
+    `;
+
     try {
-        await pool.query(createTableQuery);
-        console.log('表格创建或已经存在');
+        await pool.query(createHomeworkTableQuery);
+        await pool.query(createHomeworkImagesTableQuery);
+        console.log('数据库表格创建或已存在');
     } catch (err) {
         console.error('创建表格时出错:', err);
     }
 };
 
-// 在应用启动时调用，确保数据库表存在
-checkAndCreateTable();
+// 在应用启动时调用
+checkAndCreateTables();
 
 // 根路径 `/` 显示今日作业
 app.get('/', async (req, res) => {
     try {
-        const result = await pool.query('SELECT content FROM homework WHERE id = $1', [1]);
-        const homework = result.rows.length > 0 ? result.rows[0].content : '';
+        const homeworkResult = await pool.query('SELECT content FROM homework WHERE id = $1', [1]);
+        const homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
         const renderedHomework = DOMPurifyInstance.sanitize(marked(homework));
+
+        const imagesResult = await pool.query('SELECT image_data FROM homework_images WHERE homework_id = $1', [1]);
+        const images = imagesResult.rows.map((row) => `<img src="data:image/png;base64,${row.image_data.toString('base64')}" />`);
 
         res.send(`
             <!DOCTYPE html>
@@ -68,13 +79,13 @@ app.get('/', async (req, res) => {
                 <style>
                     body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
                     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                    img { max-width: 100%; height: auto; }
+                    img { max-width: 100%; height: auto; margin: 10px 0; }
                 </style>
             </head>
             <body>
                 <h1>今日作业</h1>
                 <div>${renderedHomework || '<p>暂无作业内容</p>'}</div>
-                <br>
+                <div>${images.join('')}</div>
             </body>
             </html>
         `);
@@ -96,8 +107,10 @@ app.get('/setc', (req, res) => {
         </head>
         <body>
             <h1>设置今日作业</h1>
-            <form method="POST" action="/setc">
+            <form method="POST" action="/setc" enctype="multipart/form-data">
                 <textarea name="homework" rows="10" cols="50" placeholder="输入Markdown格式的作业内容" maxlength="500"></textarea>
+                <br>
+                <input type="file" name="images" accept="image/*" multiple />
                 <br>
                 <button type="submit">提交</button>
             </form>
@@ -106,23 +119,35 @@ app.get('/setc', (req, res) => {
     `);
 });
 
-// 接收作业内容并存储到 PostgreSQL
-app.post('/setc', async (req, res) => {
+// 接收作业内容和图片并存储到数据库
+app.post('/setc', upload.array('images', 3), async (req, res) => {
     const sanitizeInput = (input) => input.replace(/<script.*?>.*?<\/script>/gim, '');
     const homework = sanitizeInput(req.body.homework || '（无内容）');
 
     try {
+        // 更新作业内容
         await pool.query(`
             INSERT INTO homework (id, content) VALUES ($1, $2)
             ON CONFLICT (id) DO UPDATE SET content = $2;
         `, [1, homework]);
+
+        // 删除旧图片
+        await pool.query('DELETE FROM homework_images WHERE homework_id = $1', [1]);
+
+        // 限制图片数量为 3 张
+        const images = req.files.slice(0, 3);
+        for (const image of images) {
+            await pool.query(`
+                INSERT INTO homework_images (homework_id, image_data) VALUES ($1, $2);
+            `, [1, image.buffer]);
+        }
 
         res.send(`
             <h1>作业已更新！</h1>
             <p>点击 <a href="/">这里</a> 查看今日作业。</p>
         `);
     } catch (err) {
-        console.error('保存作业内容到数据库时出错:', err);
+        console.error('保存作业内容或图片时出错:', err);
         res.status(500).send('服务器内部错误');
     }
 });

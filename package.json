@@ -6,15 +6,13 @@
     "dev": "vercel dev",
     "start": "node api/index.js"
   },
-  "dependencies": {
-    "express": "^4.17.1",
-    "marked": "^4.0.12",
-    "@vercel/edge-config": "^1.0.0",
-    "pg": "^8.9.0",
-    "dompurify": "^2.4.0",
-    "jsdom": "^22.1.0"
-  },
-  "devDependencies": {
-    "vercel": "^39.0.0"
-  }
+"dependencies": {
+  "express": "^4.17.1",
+  "marked": "^4.0.12",
+  "@vercel/edge-config": "^1.0.0",
+  "pg": "^8.9.0",
+  "dompurify": "^2.4.0",
+  "jsdom": "^22.1.0",
+  "multer": "^1.4.5"
+}
 }
