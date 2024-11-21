@@ -1,28 +1,33 @@
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
+const path = require('path');
+const multer = require('multer');
+const { Pool } = require('pg');
+const { JSDOM } = require('jsdom');
+const DOMPurify = require('dompurify');
+const { marked } = require('marked');
 
-// 路由文件
-const setcRoute = require('./r/setc');
-const homeworkRoute = require('./r/homework');  // 导入 homework.js
-const setPasswordRoute = require('./r/set-password');
-
+// App and Middleware setup
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// 设定静态文件路径
-app.use(express.static(path.join(__dirname, 'msrc'))); // 静态文件目录为 'msrc'
+// Database and file upload setup
+const pool = require('./r/db');
+const upload = require('./r/multer');
+const DOMPurifyInstance = DOMPurify(new JSDOM('').window);
 
-// 主页加载 msrc/index.html 文件
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'msrc', 'index.html'));
-});
+// Routes
+const setcRoute = require('./r/setc');
+const homeworkRoute = require('./r/homework');
+const setPasswordRoute = require('./r/set-password');
 
-// 路由配置
+app.use('/', homeworkRoute);
 app.use('/setc', setcRoute);
-app.use('/homework', homeworkRoute); // 使用 homework.js 来处理 /homework 路由
 app.use('/set-password', setPasswordRoute);
 
-// 启动服务
+// Database table setup
+const { checkAndCreateTables } = require('./r/db');
+checkAndCreateTables();
+
 module.exports = app;

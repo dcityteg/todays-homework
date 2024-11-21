@@ -1,20 +1,20 @@
 const express = require('express');
-const { pool } = require('./db'); // 从 db.js 导入数据库连接池
-const DOMPurify = require('dompurify');
 const { marked } = require('marked');
+const { pool } = require('./db');
+const DOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
-
 const router = express.Router();
 
-// 作业页面路由
+// Initialize DOMPurify
+const window = new JSDOM('').window;
+const DOMPurifyInstance = DOMPurify(window);
+
+// Homework Route
 router.get('/', async (req, res) => {
     try {
-        // 查询作业内容
         const homeworkResult = await pool.query('SELECT content FROM homework WHERE id = $1', [1]);
         const homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
-        
-        // 使用 DOMPurify 和 marked 渲染作业内容
-        const renderedHomework = DOMPurify.sanitize(marked(homework));
+        const renderedHomework = DOMPurifyInstance.sanitize(marked(homework));
 
         res.send(`
             <!DOCTYPE html>
@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Today's Homework</title>
+                <title>今日作业</title>
                 <style>
                     body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
                     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
@@ -31,12 +31,12 @@ router.get('/', async (req, res) => {
             </head>
             <body>
                 <h1>今日作业</h1>
-                <div>${renderedHomework || '<p>暂无作业内容</p>'}</div>
+                <div>${renderedHomework || '<p>暂未上传作业</p>'}</div>
             </body>
             </html>
         `);
     } catch (err) {
-        res.status(500).send('服务器内部错误');
+        res.status(500).send('Internal Server Error');
     }
 });
 
