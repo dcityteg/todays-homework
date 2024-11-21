@@ -35,7 +35,7 @@ const setPassword = (newPassword) => {
 };
 
 // 示例：在应用启动时设置初始密码
-setPassword('defaultpassword');
+setPassword('123abc');
 
 // 检查并创建数据库表
 const checkAndCreateTables = async () => {
