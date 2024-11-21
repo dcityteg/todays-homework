@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { marked } = require('marked');
+const bcrypt = require('bcrypt');  // 确保导入 bcrypt
 
 const router = express.Router();
 
