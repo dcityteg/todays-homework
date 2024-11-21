@@ -12,11 +12,11 @@
       "dest": "index.js"
     },
     {
-      "src": "/",
+      "src": "/set-password",
       "dest": "index.js"
     },
     {
-      "src": "/set-password",
+      "src": "/",
       "dest": "index.js"
     }
   ]
