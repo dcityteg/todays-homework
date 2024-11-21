@@ -5,8 +5,8 @@ const { JSDOM } = require('jsdom');
 const DOMPurify = require('dompurify');
 
 const app = express();
-const homeworkRoutes = require('./routes/homework');
-const passwordRoutes = require('./routes/password');
+const homeworkRoutes = require('routes/homework');
+const passwordRoutes = require('routes/password');
 
 // 初始化 PostgreSQL 连接池
 const pool = new Pool({
