@@ -12,6 +12,10 @@
       "dest": "index.js"
     },
     {
+      "src": "/homework",
+      "dest": "index.js"
+    },
+    {
       "src": "/set-password",
       "dest": "index.js"
     },
