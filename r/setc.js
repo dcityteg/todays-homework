@@ -2,14 +2,15 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { getPasswordHash } = require('./db');
 const pool = require('./db').pool;
+const upload = require('./multer');  // 导入 multer 配置
 const router = express.Router();
 
-// Set Homework Route
+// 设置作业页面
 router.get('/', async (req, res) => {
     const { s: suppliedPassword } = req.query;
     const storedHash = await getPasswordHash();
 
-    // Validate password
+    // 校验密码
     const isValidPassword = await bcrypt.compare(suppliedPassword || '', storedHash);
     if (!isValidPassword) {
         return res.status(403).send('Invalid password or missing password. Example: /setc?s=yourpassword');
@@ -59,6 +60,32 @@ router.get('/', async (req, res) => {
         </body>
         </html>
     `);
+});
+
+// 处理作业内容和图片上传
+router.post('/', upload.array('images', 3), async (req, res) => {
+    const homework = req.body.homework || '（无内容）';
+    const images = req.files;
+
+    try {
+        let updatedHomework = homework;
+
+        // 上传图片后，将图片 Markdown 插入到作业内容中
+        images.forEach((image) => {
+            const imageMarkdown = `![image](data:image/png;base64,${image.buffer.toString('base64')})`;
+            updatedHomework = updatedHomework.replace(/\[image\]/, imageMarkdown); // 替换标记为图片
+        });
+
+        await pool.query(
+            `INSERT INTO homework (id, content) VALUES ($1, $2)
+             ON CONFLICT (id) DO UPDATE SET content = $2;`,
+            [1, updatedHomework]
+        );
+
+        res.redirect('/');  // 提交成功后重定向到主页
+    } catch (err) {
+        res.status(500).send('保存作业内容或图片时出错');
+    }
 });
 
 module.exports = router;
