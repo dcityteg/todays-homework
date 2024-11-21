@@ -25,8 +25,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // 路由
-app.use('/', homeworkRoutes(pool, DOMPurifyInstance));
-app.use('/', passwordRoutes(pool));
+app.use('/homework', homeworkRoutes(pool, DOMPurifyInstance));  // 将作业相关路由放在 /homework 下
+app.use('/password', passwordRoutes(pool));  // 将密码相关路由放在 /password 下
 
 // 优雅关闭数据库连接
 process.on('SIGINT', async () => {
