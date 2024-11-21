@@ -39,16 +39,16 @@ router.get('/', async (req, res) => {
             </script>
         </head>
         <body>
-            <h1>Set Today's Homework</h1>
+            <h1>设置展示内容</h1>
             <form method="POST" action="/setc" enctype="multipart/form-data">
                 <textarea id="homework" name="homework" rows="10" cols="50">${homework}</textarea>
                 <br>
-                <button type="button" onclick="insertAtCursor('homework', '[image]')">Insert Image Placeholder</button>
-                <button type="button" onclick="insertAtCursor('homework', '\\n')">Insert Line Break</button>
+                <button type="button" onclick="insertAtCursor('homework', '[image]')">插入已上传图片</button>
+                <button type="button" onclick="insertAtCursor('homework', '\\n')">换行</button>
                 <br><br>
                 <input type="file" name="images" accept="image/*" multiple />
                 <br>
-                <button type="submit">Submit</button>
+                <button type="submit">提交</button>
             </form>
             <hr>
             <h2>Change Password</h2>

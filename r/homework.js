@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Today's Homework</title>
+                <title>今日作业</title>
                 <style>
                     body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
                     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
@@ -30,8 +30,8 @@ router.get('/', async (req, res) => {
                 </style>
             </head>
             <body>
-                <h1>Today's Homework</h1>
-                <div>${renderedHomework || '<p>No homework available</p>'}</div>
+                <h1>今日作业</h1>
+                <div>${renderedHomework || '<p>暂未上传作业</p>'}</div>
             </body>
             </html>
         `);
