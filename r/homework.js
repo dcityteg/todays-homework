@@ -12,16 +12,15 @@ const DOMPurifyInstance = DOMPurify(window);
 // Homework Route
 router.get('/', async (req, res) => {
     try {
-        // 查询作业内容及更新时间
+        // 查询作业内容和更新时间
         const homeworkResult = await pool.query('SELECT content, updated_at FROM homework WHERE id = $1', [1]);
         const homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
         const updatedAt = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].updated_at : null;
 
-        // 渲染作业内容
         const renderedHomework = DOMPurifyInstance.sanitize(marked(homework));
 
-        // 格式化更新时间为可读的日期格式
-        const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString() : '未更新';
+        // 格式化时间
+        const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString() : '未设置时间';
 
         res.send(`
             <!DOCTYPE html>
@@ -40,7 +39,7 @@ router.get('/', async (req, res) => {
                 <h1>今日作业</h1>
                 <div>${renderedHomework || '<p>暂未上传作业</p>'}</div>
                 <hr>
-                <p>更改时间: ${formattedUpdatedAt}</p>
+                <p><strong>更改时间：</strong>${formattedUpdatedAt}</p>
             </body>
             </html>
         `);
