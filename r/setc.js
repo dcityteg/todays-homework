@@ -16,8 +16,12 @@ router.get('/', async (req, res) => {
         return res.status(403).send('Invalid password or missing password. Example: /setc?s=yourpassword');
     }
 
+    // 查询作业内容并将图片替换为占位符
     const homeworkResult = await pool.query('SELECT content FROM homework WHERE id = $1', [1]);
-    const homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
+    let homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
+
+    // 使用正则表达式查找图片并替换为占位符 [image]
+    homework = homework.replace(/!\[image\]\(data:image\/png;base64,[^)]*\)/g, '[image]');
 
     res.send(`
         <!DOCTYPE html>
@@ -64,18 +68,20 @@ router.get('/', async (req, res) => {
 
 // 处理作业内容和图片上传
 router.post('/', upload.array('images', 3), async (req, res) => {
-    const homework = req.body.homework || '（无内容）';
+    let homework = req.body.homework || '（无内容）';
     const images = req.files;
 
     try {
+        // 如果有上传的图片，将它们替换到作业内容中的占位符
         let updatedHomework = homework;
 
-        // 上传图片后，将图片 Markdown 插入到作业内容中
         images.forEach((image) => {
+            // 替换占位符 [image] 为实际的图片Markdown
             const imageMarkdown = `![image](data:image/png;base64,${image.buffer.toString('base64')})`;
-            updatedHomework = updatedHomework.replace(/\[image\]/, imageMarkdown); // 替换标记为图片
+            updatedHomework = updatedHomework.replace('[image]', imageMarkdown);
         });
 
+        // 更新数据库中的作业内容
         await pool.query(
             `INSERT INTO homework (id, content) VALUES ($1, $2)
              ON CONFLICT (id) DO UPDATE SET content = $2;`,
@@ -84,6 +90,7 @@ router.post('/', upload.array('images', 3), async (req, res) => {
 
         res.redirect('/');  // 提交成功后重定向到主页
     } catch (err) {
+        console.error('保存作业内容或图片时出错:', err);
         res.status(500).send('保存作业内容或图片时出错');
     }
 });
