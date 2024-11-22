@@ -9,7 +9,6 @@ const router = express.Router();
 const window = new JSDOM('').window;
 const DOMPurifyInstance = DOMPurify(window);
 
-// Homework Route
 router.get('/', async (req, res) => {
     try {
         // 查询作业内容和更新时间
@@ -19,8 +18,8 @@ router.get('/', async (req, res) => {
 
         const renderedHomework = DOMPurifyInstance.sanitize(marked(homework));
 
-        // 格式化时间
-        const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString() : '未设置时间';
+        // 格式化时间（根据中国时区）
+        const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '未设置时间';
 
         res.send(`
             <!DOCTYPE html>
@@ -47,5 +46,6 @@ router.get('/', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
 
 module.exports = router;

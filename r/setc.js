@@ -5,7 +5,6 @@ const pool = require('./db').pool;
 const upload = require('./multer');  // 导入 multer 配置
 const router = express.Router();
 
-// 设置作业页面
 router.get('/', async (req, res) => {
     const { s: suppliedPassword } = req.query;
     const storedHash = await getPasswordHash();
@@ -23,6 +22,9 @@ router.get('/', async (req, res) => {
 
     // 使用正则表达式查找图片并替换为占位符
     homework = homework.replace(/!\[image\]\(data:image\/png;base64,[^)]*\)/g, '[image]');
+
+    // 格式化时间（根据中国时区）
+    const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '未设置作业';
 
     res.send(`
         <!DOCTYPE html>
@@ -66,11 +68,12 @@ router.get('/', async (req, res) => {
             <hr>
 
             <h3>最后更改时间:</h3>
-            <p>${updatedAt ? updatedAt.toLocaleString() : '未设置作业'}</p>
+            <p>${formattedUpdatedAt}</p>
         </body>
         </html>
     `);
 });
+
 
 // 处理作业内容和图片上传
 router.post('/', upload.array('images', 3), async (req, res) => {
