@@ -66,4 +66,25 @@ const checkAndCreateTables = async () => {
     }
 };
 
-module.exports = { pool, checkAndCreateTables };
+// 获取密码哈希值
+const getPasswordHash = async () => {
+    try {
+        const result = await pool.query('SELECT hash FROM password LIMIT 1');
+        if (result.rows.length > 0) {
+            return result.rows[0].hash;
+        } else {
+            throw new Error('No password hash found in database.');
+        }
+    } catch (err) {
+        console.error('Error retrieving password hash:', err);
+        throw err;
+    }
+};
+
+// 更新密码
+const updatePassword = async (newPassword) => {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE password SET hash = $1 WHERE id = 1', [hashedPassword]);
+};
+
+module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword };
