@@ -5,7 +5,7 @@ const DOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 const router = express.Router();
 
-// Initialize DOMPurify
+// 初始化 DOMPurify
 const window = new JSDOM('').window;
 const DOMPurifyInstance = DOMPurify(window);
 
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 
         res.send(`
             <!DOCTYPE html>
-            <html lang="en">
+            <html lang="zh-CN">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +33,18 @@ router.get('/', async (req, res) => {
                     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
                     img { max-width: 100%; height: auto; margin: 10px 0; }
                 </style>
+                <!-- Coze AI 助手的脚本 -->
+                <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.0.0-beta.4/libs/cn/index.js"></script>
+                <script>
+                    new CozeWebSDK.WebChatClient({
+                        config: {
+                            bot_id: '7330973276627468288',
+                        },
+                        componentProps: {
+                            title: 'Coze',
+                        },
+                    });
+                </script>
             </head>
             <body>
                 <h1>今日作业</h1>
@@ -43,9 +55,8 @@ router.get('/', async (req, res) => {
             </html>
         `);
     } catch (err) {
-        res.status(500).send('Internal Server Error');
+        res.status(500).send('内部服务器错误');
     }
 });
-
 
 module.exports = router;

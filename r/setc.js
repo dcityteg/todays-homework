@@ -45,6 +45,18 @@ router.get('/', async (req, res) => {
                     textarea.focus();
                 }
             </script>
+            <!-- AI Assistant Script Integration -->
+            <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.0.0-beta.4/libs/cn/index.js"></script>
+            <script>
+                new CozeWebSDK.WebChatClient({
+                    config: {
+                        bot_id: '7330973276627468288',
+                    },
+                    componentProps: {
+                        title: 'Coze',
+                    },
+                });
+            </script>
         </head>
         <body>
             <h1>设置展示内容</h1>
@@ -73,7 +85,6 @@ router.get('/', async (req, res) => {
         </html>
     `);
 });
-
 
 // 处理作业内容和图片上传
 router.post('/', upload.array('images', 3), async (req, res) => {
