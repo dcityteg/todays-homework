@@ -33,24 +33,23 @@ router.get('/', async (req, res) => {
                     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
                     img { max-width: 100%; height: auto; margin: 10px 0; }
                 </style>
-                <!-- Coze AI 助手的脚本 -->
-                <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.0.0-beta.4/libs/cn/index.js"></script>
-                <script>
-                    new CozeWebSDK.WebChatClient({
-                        config: {
-                            bot_id: '7330973276627468288',
-                        },
-                        componentProps: {
-                            title: 'Coze',
-                        },
-                    });
-                </script>
             </head>
             <body>
                 <h1>今日作业</h1>
                 <div>${renderedHomework || '<p>暂未上传作业</p>'}</div>
                 <hr>
                 <p><strong>更改时间：</strong>${formattedUpdatedAt}</p>
+                      <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.0.0-beta.4/libs/cn/index.js"></script>
+                <script>
+                    new CozeWebSDK.WebChatClient({
+                        config: {
+                        bot_id: '7330973276627468288',
+                        },
+                        componentProps: {
+                        title: 'Coze',
+                        },
+                    });
+                </script>
             </body>
             </html>
         `);
