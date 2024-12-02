@@ -5,8 +5,9 @@ const DOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 const router = express.Router();
 
-// 新增：引入mathjax
-const mathjax = require('mathjax-full');
+// 新增：引入katex相关模块
+const katex = require('katex');
+const katexAutoRender = require('katex/dist/contrib/auto-render.js');
 
 // 初始化 DOMPurify
 const window = new JSDOM('').window;
@@ -19,13 +20,15 @@ router.get('/', async (req, res) => {
         const homework = homeworkResult.rows.length > 0? homeworkResult.rows[0].content : '';
         const updatedAt = homeworkResult.rows.length > 0? homeworkResult.rows[0].updated_at : null;
 
-        // 渲染作业内容前，配置mathjax以处理LaTeX公式
-        const htmlWithMathjax = await mathjax.tex2chtmlPromise(homework, {
-            display: true, // 根据需要设置为true（块级公式）或false（行内公式）
-            em: 16, // 设置字体大小等相关参数，可根据实际情况调整
+        // 渲染作业内容前，配置katex以处理LaTeX公式
+        const htmlWithKatex = katexAutoRender.renderToString(homework, {
+            throwOnError: false,
+            displayMode: true, // 根据需要设置为true（块级公式）或false（行内公式）
+            output: 'htmlAndCss',
+            strict: 'ignore',
         });
 
-        const renderedHomework = DOMPurifyInstance.sanitize(marked(htmlWithMathjax));
+        const renderedHomework = DOMPurifyInstance.sanitize(marked(htmlWithKatex));
 
         // 格式化时间（根据中国时区）
         const formattedUpdatedAt = updatedAt? new Date(updatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '未设置时间';
@@ -42,9 +45,8 @@ router.get('/', async (req, res) => {
                     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
                     img { max-width: 100%; height: auto; margin: 10px 0; }
                 </style>
-                <!-- 新增：引入mathjax的CSS和JavaScript -->
-                <link rel="stylesheet" href="${mathjax.document().cssFiles[0]}">
-                <script src="${mathjax.document().jsFiles[0]}"></script>
+                <!-- 新增：引入katex的CSS -->
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
             </head>
             <body>
                 <h1>今日作业</h1>
@@ -62,11 +64,15 @@ router.get('/', async (req, res) => {
                         },
                     });
                 </script>
-                <!-- 新增：初始化mathjax -->
+                <!-- 新增：初始化katex -->
                 <script>
-                    MathJax.startup.defaultReady();
-                    MathJax.startup.promise.then(() => {
-                        MathJax.typesetPromise();
+                    document.addEventListener('DOMContentLoaded', function () {
+                        katexAutoRender.render(document.body, {
+                            throwOnError: false,
+                            displayMode: true,
+                            output: 'htmlAndCss',
+                            strict: 'ignore',
+                        });
                     });
                 </script>
             </body>
