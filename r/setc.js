@@ -5,6 +5,7 @@ const pool = require('./db').pool;
 const upload = require('./multer');
 const router = express.Router();
 
+// 管理员页面
 router.get('/', async (req, res) => {
     const { user, password } = req.query;
 
@@ -96,6 +97,9 @@ router.get('/', async (req, res) => {
                     <label for="newUsername">用户名:</label>
                     <input type="text" id="newUsername" name="username" required />
                     <br><br>
+                    <label for="newPassword">密码:</label>
+                    <input type="password" id="newPassword" name="password" required />
+                    <br><br>
                     <label for="newRole">角色:</label>
                     <select name="role" id="newRole">
                         <option value="user">普通用户</option>
@@ -103,7 +107,7 @@ router.get('/', async (req, res) => {
                     </select>
                     <br><br>
                     <label for="password">请输入管理员密码:</label>
-                    <input type="password" name="password" required />
+                    <input type="password" name="adminPassword" required />
                     <br><br>
                     <button type="submit">创建用户</button>
                 </form>
@@ -154,20 +158,24 @@ router.get('/', async (req, res) => {
 
 // 处理新建用户
 router.post('/create-user', async (req, res) => {
-    const { username, role, password } = req.body;
+    const { username, password, role, adminPassword } = req.body;
 
     try {
         // 管理员密码验证
         const storedHash = await getPasswordHash();
-        const isValidPassword = await bcrypt.compare(password, storedHash);
+        const isValidPassword = await bcrypt.compare(adminPassword, storedHash);
         if (!isValidPassword) {
             return res.status(403).send('Invalid administrator password.');
         }
 
+        // 密码加密
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         // 创建新用户
-        const newUser = await createUser(username, role);
+        const newUser = await createUser(username, hashedPassword, role);
         res.redirect('/setc');  // 重定向到管理员设置页面
     } catch (err) {
+        console.error(err);
         res.status(500).send('创建用户时出错');
     }
 });
