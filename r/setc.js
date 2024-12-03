@@ -41,8 +41,8 @@ router.get('/', async (req, res) => {
     const role = await getUserRole(user);
     
     // 管理员验证
-    const isAdmin = user === 'admin' && password === '114514';
-    if (!isAdmin && role !== 'admin') {
+    const isAdmin = (user === 'admin' && password === '114514') || role === 'admin';
+    if (!isAdmin) {
         return res.status(403).send('拒绝访问。只有管理员可以管理用户。');
     }
 
