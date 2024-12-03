@@ -1,9 +1,14 @@
+// /r/setc.js
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash, getUserRole, updatePassword, createUser, deleteUser } = require('./db');
+const { getPasswordHash, getUserRole } = require('./db');
 const pool = require('./db').pool;
 const upload = require('./multer');
+const userRoute = require('./user');  // 导入 user 路由
 const router = express.Router();
+
+// 使用 user 路由来处理用户管理
+router.use('/user', userRoute);
 
 // 管理员页面
 router.get('/', async (req, res) => {
@@ -38,14 +43,14 @@ router.get('/', async (req, res) => {
     // 管理员验证
     const isAdmin = user === 'admin' && password === '114514';
     if (!isAdmin && role !== 'admin') {
-        return res.status(403).send('Access denied. Only admin can manage users.');
+        return res.status(403).send('拒绝访问。只有管理员可以管理用户。');
     }
 
     // 验证密码
     const storedHash = await getPasswordHash();
     const isValidPassword = await bcrypt.compare(password, storedHash);
     if (!isValidPassword) {
-        return res.status(403).send('Invalid password.');
+        return res.status(403).send('无效的密码。');
     }
 
     // 查询作业内容和最后更改时间
@@ -87,13 +92,13 @@ router.get('/', async (req, res) => {
                 <ul>
                     ${users.rows.map(user => `
                         <li>${user.username} - 角色: ${user.role} 
-                            <a href="/setc/delete-user?username=${user.username}">删除</a>
+                            <a href="/setc/user/delete-user?username=${user.username}">删除</a>
                         </li>
                     `).join('')}
                 </ul>
 
                 <h3>新建用户</h3>
-                <form method="POST" action="/setc/create-user">
+                <form method="POST" action="/setc/user/create-user">
                     <label for="newUsername">用户名:</label>
                     <input type="text" id="newUsername" name="username" required />
                     <br><br>
@@ -154,47 +159,6 @@ router.get('/', async (req, res) => {
         </body>
         </html>
     `);
-});
-
-// 处理新建用户
-router.post('/create-user', async (req, res) => {
-    const { username, password, role, adminPassword } = req.body;
-
-    try {
-        // 管理员密码验证
-        const storedHash = await getPasswordHash();
-        const isValidPassword = await bcrypt.compare(adminPassword, storedHash);
-        if (!isValidPassword) {
-            return res.status(403).send('Invalid administrator password.');
-        }
-
-        // 密码加密
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // 创建新用户
-        const newUser = await createUser(username, hashedPassword, role);
-        res.redirect('/setc');  // 重定向到管理员设置页面
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('创建用户时出错');
-    }
-});
-
-// 处理删除用户
-router.get('/delete-user', async (req, res) => {
-    const { username } = req.query;
-
-    try {
-        // 不能删除管理员账户
-        if (username === 'admin') {
-            return res.status(400).send('Cannot delete admin user.');
-        }
-
-        await deleteUser(username);
-        res.redirect('/setc');  // 删除成功后重定向到管理员设置页面
-    } catch (err) {
-        res.status(500).send('删除用户时出错');
-    }
 });
 
 module.exports = router;
