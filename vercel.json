@@ -20,6 +20,10 @@
       "dest": "index.js"
     },
     {
+      "src": "/setc/user.*",
+      "dest": "index.js"
+    },
+    {
       "src": "/",
       "dest": "index.js"
     }
