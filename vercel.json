@@ -4,24 +4,32 @@
     {
       "src": "index.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "r/setc.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "r/homework.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/setc",
-      "dest": "index.js"
+      "dest": "/r/setc.js"
     },
     {
       "src": "/homework",
-      "dest": "index.js"
+      "dest": "/r/homework.js"
     },
     {
       "src": "/set-password",
-      "dest": "index.js"
+      "dest": "/r/set-password.js"
     },
     {
       "src": "/",
-      "dest": "index.js"
+      "dest": "/index.js"
     }
   ]
 }
