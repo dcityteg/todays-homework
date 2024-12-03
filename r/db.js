@@ -134,4 +134,4 @@ const getUserPassword = async (username) => {
     }
 };
 
-module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword, createUser, deleteUser, getUserRole };
+module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword, createUser, deleteUser, getUserRole, getUserPassword };
