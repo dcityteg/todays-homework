@@ -120,4 +120,18 @@ const deleteUser = async (username) => {
     await pool.query('DELETE FROM users WHERE username = $1', [username]);
 };
 
+const getUserPassword = async (username) => {
+    try {
+        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
+        if (result.rows.length > 0) {
+            return result.rows[0].password;
+        } else {
+            throw new Error('用户未找到');
+        }
+    } catch (err) {
+        console.error('Error retrieving user password:', err);
+        throw err;
+    }
+};
+
 module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword, createUser, deleteUser, getUserRole };

@@ -1,7 +1,7 @@
 // /r/setc.js
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash, getUserRole } = require('./db');
+const { getPasswordHash, getUserRole, getUserPassword } = require('./db'); // 引入 getUserPassword
 const pool = require('./db').pool;
 const upload = require('./multer');
 const userRoute = require('./user');  // 导入 user 路由
@@ -37,20 +37,26 @@ router.get('/', async (req, res) => {
         `);
     }
 
-    // 获取数据库中的管理员密码哈希
-    const storedHash = await getPasswordHash();
-
-    // 验证密码
-    const isValidPassword = await bcrypt.compare(password, storedHash);
-    if (!isValidPassword) {
-        return res.status(403).send('无效的密码。');
-    }
-
     // 获取用户角色
     const role = await getUserRole(user);
 
-    // 判断是否是管理员（普通用户可以继续访问，不会被拒绝）
-    const isAdmin = role === 'admin';
+    // 获取管理员密码哈希
+    const storedAdminHash = await getPasswordHash();
+
+    // 验证管理员密码
+    if (role === 'admin') {
+        const isAdminValid = await bcrypt.compare(password, storedAdminHash);
+        if (!isAdminValid) {
+            return res.status(403).send('无效的管理员密码。');
+        }
+    } else {
+        // 获取用户的密码哈希
+        const storedUserHash = await getUserPassword(user);
+        const isUserValid = await bcrypt.compare(password, storedUserHash);
+        if (!isUserValid) {
+            return res.status(403).send('无效的用户密码。');
+        }
+    }
 
     // 查询作业内容和最后更改时间
     const homeworkResult = await pool.query('SELECT content, updated_at FROM homework WHERE id = $1', [1]);
@@ -64,7 +70,7 @@ router.get('/', async (req, res) => {
     const users = await pool.query('SELECT id, username, role FROM users');
 
     // 如果是管理员，显示用户管理功能
-    if (isAdmin) {
+    if (role === 'admin') {
         res.send(`
             <!DOCTYPE html>
             <html lang="zh-CN">
