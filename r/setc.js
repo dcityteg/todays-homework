@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash, getUserRole } = require('./db');
+const { getPasswordHash, getUserRole, updatePassword, createUser, deleteUser } = require('./db');
 const pool = require('./db').pool;
 const upload = require('./multer');  // 导入 multer 配置
 const router = express.Router();
@@ -8,12 +8,30 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     const { user, password } = req.query;
 
-    // 校验用户名和密码
+    // 如果没有提供用户名和密码，要求输入
     if (!user || !password) {
-        return res.status(403).send('Missing user or password. Example: /setc?user=admin&password=yourpassword');
+        return res.send(`
+            <html lang="zh-CN">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>管理员登录</title>
+            </head>
+            <body>
+                <h1>请输入用户名和密码</h1>
+                <form method="GET" action="/setc">
+                    <label for="user">用户名:</label>
+                    <input type="text" id="user" name="user" required /><br><br>
+                    <label for="password">密码:</label>
+                    <input type="password" id="password" name="password" required /><br><br>
+                    <button type="submit">提交</button>
+                </form>
+            </body>
+            </html>
+        `);
     }
 
-    // 获取用户角色
+    // 验证用户名和密码
     const role = await getUserRole(user);
     
     // 管理员验证
@@ -37,37 +55,79 @@ router.get('/', async (req, res) => {
     // 格式化时间（根据中国时区）
     const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '未设置作业';
 
+    // 获取所有用户
+    const users = await pool.query('SELECT id, username, role FROM users');
+
+    // 如果是管理员，显示用户管理功能
+    if (isAdmin) {
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="zh-CN">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>管理员设置</title>
+            </head>
+            <body>
+                <h1>设置展示内容</h1>
+                <form method="POST" action="/setc" enctype="multipart/form-data">
+                    <textarea id="homework" name="homework" rows="10" cols="50">${homework}</textarea>
+                    <br>
+                    <button type="button" onclick="insertAtCursor('homework', '[image]')">插入已上传图片</button>
+                    <button type="button" onclick="insertAtCursor('homework', '\\n')">换行</button>
+                    <br><br>
+                    <input type="file" name="images" accept="image/*" multiple />
+                    <br>
+                    <button type="submit">提交</button>
+                </form>
+                <hr>
+                <h2>用户管理</h2>
+                <h3>用户列表：</h3>
+                <ul>
+                    ${users.rows.map(user => `
+                        <li>${user.username} - 角色: ${user.role} 
+                            <a href="/setc/delete-user?username=${user.username}">删除</a>
+                        </li>
+                    `).join('')}
+                </ul>
+
+                <h3>新建用户</h3>
+                <form method="POST" action="/setc/create-user">
+                    <label for="newUsername">用户名:</label>
+                    <input type="text" id="newUsername" name="username" required />
+                    <br><br>
+                    <label for="newRole">角色:</label>
+                    <select name="role" id="newRole">
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                    <br><br>
+                    <button type="submit">创建用户</button>
+                </form>
+                <hr>
+                <h2>Change Password</h2>
+                <form method="POST" action="/set-password">
+                    <input type="password" name="newPassword" placeholder="New Password" required />
+                    <button type="submit">Change Password</button>
+                </form>
+
+                <hr>
+
+                <h3>最后更改时间:</h3>
+                <p>${formattedUpdatedAt}</p>
+            </body>
+            </html>
+        `);
+    }
+
+    // 普通用户只能修改作业内容
     res.send(`
         <!DOCTYPE html>
         <html lang="zh-CN">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>设置展示内容</title>
-            <script>
-                function insertAtCursor(areaId, text) {
-                    const textarea = document.getElementById(areaId);
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const before = textarea.value.substring(0, start);
-                    const after = textarea.value.substring(end);
-                    textarea.value = before + text + after;
-                    textarea.selectionStart = textarea.selectionEnd = start + text.length;
-                    textarea.focus();
-                }
-            </script>
-            <!-- AI Assistant Script Integration -->
-            <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.0.0-beta.4/libs/cn/index.js"></script>
-            <script>
-                new CozeWebSDK.WebChatClient({
-                    config: {
-                        bot_id: '7330973276627468288',
-                    },
-                    componentProps: {
-                        title: 'Coze',
-                    },
-                });
-            </script>
+            <title>普通用户设置</title>
         </head>
         <body>
             <h1>设置展示内容</h1>
@@ -82,14 +142,6 @@ router.get('/', async (req, res) => {
                 <button type="submit">提交</button>
             </form>
             <hr>
-            <h2>Change Password</h2>
-            <form method="POST" action="/set-password">
-                <input type="password" name="newPassword" placeholder="New Password" required />
-                <button type="submit">Change Password</button>
-            </form>
-
-            <hr>
-
             <h3>最后更改时间:</h3>
             <p>${formattedUpdatedAt}</p>
         </body>
@@ -97,33 +149,27 @@ router.get('/', async (req, res) => {
     `);
 });
 
-// 处理作业内容和图片上传
-router.post('/', upload.array('images', 3), async (req, res) => {
-    let homework = req.body.homework || '（无内容）';
-    const images = req.files;
+// 处理新建用户
+router.post('/create-user', async (req, res) => {
+    const { username, role } = req.body;
 
     try {
-        let updatedHomework = homework;
-
-        // 如果有上传的图片，将它们替换到作业内容中的占位符
-        images.forEach((image) => {
-            const imageMarkdown = `![image](data:image/png;base64,${image.buffer.toString('base64')})`;
-            updatedHomework = updatedHomework.replace('[image]', imageMarkdown);
-        });
-
-        // 更新数据库中的作业内容以及更新时间
-        await pool.query(
-            `INSERT INTO homework (id, content, updated_at) 
-             VALUES ($1, $2, CURRENT_TIMESTAMP)
-             ON CONFLICT (id) 
-             DO UPDATE SET content = $2, updated_at = CURRENT_TIMESTAMP;`,
-            [1, updatedHomework]
-        );
-
-        res.redirect('/');  // 提交成功后重定向到主页
+        const newUser = await createUser(username, role);
+        res.redirect('/setc');  // 重定向到管理员设置页面
     } catch (err) {
-        console.error('保存作业内容或图片时出错:', err);
-        res.status(500).send('保存作业内容或图片时出错');
+        res.status(500).send('创建用户时出错');
+    }
+});
+
+// 处理删除用户
+router.get('/delete-user', async (req, res) => {
+    const { username } = req.query;
+
+    try {
+        await deleteUser(username);
+        res.redirect('/setc');  // 删除成功后重定向到管理员设置页面
+    } catch (err) {
+        res.status(500).send('删除用户时出错');
     }
 });
 
