@@ -24,6 +24,7 @@ const setPasswordRoute = require('./r/set-password');
 
 app.use('/', homeworkRoute);
 app.use('/setc', setcRoute);
+app.use('/setc/create-user', setcRoute);
 app.use('/set-password', setPasswordRoute);
 
 // Database table setup
