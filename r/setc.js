@@ -37,21 +37,20 @@ router.get('/', async (req, res) => {
         `);
     }
 
-    // 验证用户名和密码
-    const role = await getUserRole(user);
-    
-    // 管理员验证
-    const isAdmin = (user === 'admin' && password === '114514') || role === 'admin';
-    if (!isAdmin) {
-        return res.status(403).send('拒绝访问。只有管理员可以管理用户。');
-    }
+    // 获取数据库中的管理员密码哈希
+    const storedHash = await getPasswordHash();
 
     // 验证密码
-    const storedHash = await getPasswordHash();
     const isValidPassword = await bcrypt.compare(password, storedHash);
     if (!isValidPassword) {
         return res.status(403).send('无效的密码。');
     }
+
+    // 获取用户角色
+    const role = await getUserRole(user);
+
+    // 判断是否是管理员（普通用户可以继续访问，不会被拒绝）
+    const isAdmin = role === 'admin';
 
     // 查询作业内容和最后更改时间
     const homeworkResult = await pool.query('SELECT content, updated_at FROM homework WHERE id = $1', [1]);
