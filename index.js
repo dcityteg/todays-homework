@@ -21,10 +21,11 @@ const DOMPurifyInstance = DOMPurify(new JSDOM('').window);
 const setcRoute = require('./r/setc');
 const homeworkRoute = require('./r/homework');
 const setPasswordRoute = require('./r/set-password');
+const userRoute = require('./r/user');  // 导入 user 路由
 
 app.use('/', homeworkRoute);
 app.use('/setc', setcRoute);
-app.use('/setc/create-user', setcRoute);
+app.use('/setc/user', userRoute);  // 更新为 /setc/user 路由
 app.use('/set-password', setPasswordRoute);
 
 // Database table setup
