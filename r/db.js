@@ -30,8 +30,8 @@ const createUsersTableQuery = `
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL, -- Add password field here
-        role TEXT NOT NULL DEFAULT 'user' -- 'admin' or 'user'
+        password TEXT NOT NULL,  -- Add password field here
+        role TEXT NOT NULL DEFAULT 'user'  -- 'admin' or 'user'
     );
 `;
 
@@ -102,6 +102,21 @@ const getUserRole = async (username) => {
     }
 };
 
+// 获取用户密码哈希
+const getUserPassword = async (username) => {
+    try {
+        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
+        if (result.rows.length > 0) {
+            return result.rows[0].password;  // 返回用户的密码哈希
+        } else {
+            throw new Error('User not found');
+        }
+    } catch (err) {
+        console.error('Error retrieving user password:', err);
+        throw err;
+    }
+};
+
 // 更新密码
 const updatePassword = async (newPassword) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -120,18 +135,13 @@ const deleteUser = async (username) => {
     await pool.query('DELETE FROM users WHERE username = $1', [username]);
 };
 
-const getUserPassword = async (username) => {
-    try {
-        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
-        if (result.rows.length > 0) {
-            return result.rows[0].password;
-        } else {
-            throw new Error('用户未找到');
-        }
-    } catch (err) {
-        console.error('Error retrieving user password:', err);
-        throw err;
-    }
+module.exports = { 
+    pool, 
+    checkAndCreateTables, 
+    getPasswordHash, 
+    updatePassword, 
+    createUser, 
+    deleteUser, 
+    getUserRole, 
+    getUserPassword 
 };
-
-module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword, createUser, deleteUser, getUserRole, getUserPassword };
