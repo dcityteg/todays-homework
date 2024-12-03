@@ -1,9 +1,8 @@
-// /r/setc.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const { getPasswordHash, getUserRole, getUserPassword } = require('./db');
 const pool = require('./db').pool;
-const upload = require('./multer');
+const upload = require('./multer'); // 需要确保 multer 被正确配置
 const userRoute = require('./user');  // 导入 user 路由
 const router = express.Router();
 
@@ -168,6 +167,20 @@ router.get('/', async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('服务器内部错误');
+    }
+});
+
+// 处理 POST 请求，更新作业内容
+router.post('/', upload.array('images'), async (req, res) => {
+    const { homework } = req.body;
+
+    try {
+        // 保存作业内容
+        await pool.query('UPDATE homework SET content = $1 WHERE id = $2', [homework, 1]);
+        res.send('作业内容已成功更新！');
+    } catch (error) {
+        console.error('更新作业时出错:', error);
+        res.status(500).send('服务器错误');
     }
 });
 
