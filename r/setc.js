@@ -1,18 +1,32 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash } = require('./db');
+const { getPasswordHash, getUserRole } = require('./db');
 const pool = require('./db').pool;
 const upload = require('./multer');  // 导入 multer 配置
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-    const { s: suppliedPassword } = req.query;
-    const storedHash = await getPasswordHash();
+    const { user, password } = req.query;
 
-    // 校验密码
-    const isValidPassword = await bcrypt.compare(suppliedPassword || '', storedHash);
+    // 校验用户名和密码
+    if (!user || !password) {
+        return res.status(403).send('Missing user or password. Example: /setc?user=admin&password=yourpassword');
+    }
+
+    // 获取用户角色
+    const role = await getUserRole(user);
+    
+    // 管理员验证
+    const isAdmin = user === 'admin' && password === '114514';
+    if (!isAdmin && role !== 'admin') {
+        return res.status(403).send('Access denied. Only admin can manage users.');
+    }
+
+    // 验证密码
+    const storedHash = await getPasswordHash();
+    const isValidPassword = await bcrypt.compare(password, storedHash);
     if (!isValidPassword) {
-        return res.status(403).send('Invalid password or missing password. Example: /setc?s=yourpassword');
+        return res.status(403).send('Invalid password.');
     }
 
     // 查询作业内容和最后更改时间
@@ -20,19 +34,16 @@ router.get('/', async (req, res) => {
     let homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
     const updatedAt = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].updated_at : null;
 
-    // 使用正则表达式查找图片并替换为占位符
-    homework = homework.replace(/!\[image\]\(data:image\/png;base64,[^)]*\)/g, '[image]');
-
     // 格式化时间（根据中国时区）
     const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '未设置作业';
 
     res.send(`
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="zh-CN">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Set Homework</title>
+            <title>设置展示内容</title>
             <script>
                 function insertAtCursor(areaId, text) {
                     const textarea = document.getElementById(areaId);
