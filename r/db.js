@@ -8,35 +8,34 @@ const pool = new Pool({
     idleTimeoutMillis: 30000,
 });
 
-// 创建所需的表，并添加 missing 列
+// 创建作业表的 SQL 查询
+const createHomeworkTableQuery = `
+    CREATE TABLE IF NOT EXISTS homework (
+        id SERIAL PRIMARY KEY,
+        content TEXT NOT NULL CHECK (length(content) > 0),
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+`;
+
+// 创建密码表的 SQL 查询
+const createPasswordTableQuery = `
+    CREATE TABLE IF NOT EXISTS password (
+        id SERIAL PRIMARY KEY,
+        hash TEXT NOT NULL
+    );
+`;
+
+// 创建用户表的 SQL 查询
+const createUsersTableQuery = `
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL, -- Add password field here
+        role TEXT NOT NULL DEFAULT 'user' -- 'admin' or 'user'
+    );
+`;
+
 const checkAndCreateTables = async () => {
-    // 创建作业表的 SQL 查询
-    const createHomeworkTableQuery = `
-        CREATE TABLE IF NOT EXISTS homework (
-            id SERIAL PRIMARY KEY,
-            content TEXT NOT NULL CHECK (length(content) > 0),
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    `;
-
-    // 创建密码表的 SQL 查询
-    const createPasswordTableQuery = `
-        CREATE TABLE IF NOT EXISTS password (
-            id SERIAL PRIMARY KEY,
-            hash TEXT NOT NULL
-        );
-    `;
-
-    // 创建用户表
-    const createUsersTableQuery = `
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'user'  -- 'admin' 或 'user'
-        );
-    `;
-
     try {
         // 创建作业表、密码表和用户表
         await pool.query(createHomeworkTableQuery);
@@ -44,22 +43,32 @@ const checkAndCreateTables = async () => {
         await pool.query(createUsersTableQuery);
 
         // 确保密码表至少有一条记录
-        const result = await pool.query('SELECT * FROM password');
-        if (result.rows.length === 0) {
-            const defaultPassword = process.env.DEFAULT_PASSWORD || 'defaultpassword';
-            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-            await pool.query('INSERT INTO password (hash) VALUES ($1)', [hashedPassword]);
-        }
+        await ensurePasswordRecordExists();
 
         // 确保用户表有 admin 账户
-        const userCheck = await pool.query('SELECT * FROM users WHERE username = $1', ['admin']);
-        if (userCheck.rows.length === 0) {
-            const hashedPassword = await bcrypt.hash('114514', 10);
-            await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', ['admin', hashedPassword, 'admin']);
-        }
+        await ensureAdminUserExists();
 
     } catch (err) {
         console.error('Error creating tables or adding missing columns:', err);
+    }
+};
+
+// 确保密码表至少有一条记录
+const ensurePasswordRecordExists = async () => {
+    const result = await pool.query('SELECT * FROM password');
+    if (result.rows.length === 0) {
+        const defaultPassword = process.env.DEFAULT_PASSWORD || 'defaultpassword';
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+        await pool.query('INSERT INTO password (hash) VALUES ($1)', [hashedPassword]);
+    }
+};
+
+// 确保用户表有 admin 账户
+const ensureAdminUserExists = async () => {
+    const userCheck = await pool.query('SELECT * FROM users WHERE username = $1', ['admin']);
+    if (userCheck.rows.length === 0) {
+        const hashedPassword = await bcrypt.hash('114514', 10);
+        await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', ['admin', hashedPassword, 'admin']);
     }
 };
 
@@ -99,4 +108,16 @@ const updatePassword = async (newPassword) => {
     await pool.query('UPDATE password SET hash = $1 WHERE id = 1', [hashedPassword]);
 };
 
-module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword, getUserRole };
+// 新建用户
+const createUser = async (username, password, role) => {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING *', [username, hashedPassword, role]);
+    return result.rows[0];
+};
+
+// 删除用户
+const deleteUser = async (username) => {
+    await pool.query('DELETE FROM users WHERE username = $1', [username]);
+};
+
+module.exports = { pool, checkAndCreateTables, getPasswordHash, updatePassword, createUser, deleteUser, getUserRole };
