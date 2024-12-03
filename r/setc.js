@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { getPasswordHash, getUserRole, updatePassword, createUser, deleteUser } = require('./db');
 const pool = require('./db').pool;
-const upload = require('./multer');  // 导入 multer 配置
+const upload = require('./multer');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -102,6 +102,9 @@ router.get('/', async (req, res) => {
                         <option value="admin">管理员</option>
                     </select>
                     <br><br>
+                    <label for="password">请输入管理员密码:</label>
+                    <input type="password" name="password" required />
+                    <br><br>
                     <button type="submit">创建用户</button>
                 </form>
                 <hr>
@@ -151,9 +154,17 @@ router.get('/', async (req, res) => {
 
 // 处理新建用户
 router.post('/create-user', async (req, res) => {
-    const { username, role } = req.body;
+    const { username, role, password } = req.body;
 
     try {
+        // 管理员密码验证
+        const storedHash = await getPasswordHash();
+        const isValidPassword = await bcrypt.compare(password, storedHash);
+        if (!isValidPassword) {
+            return res.status(403).send('Invalid administrator password.');
+        }
+
+        // 创建新用户
         const newUser = await createUser(username, role);
         res.redirect('/setc');  // 重定向到管理员设置页面
     } catch (err) {
@@ -166,6 +177,11 @@ router.get('/delete-user', async (req, res) => {
     const { username } = req.query;
 
     try {
+        // 不能删除管理员账户
+        if (username === 'admin') {
+            return res.status(400).send('Cannot delete admin user.');
+        }
+
         await deleteUser(username);
         res.redirect('/setc');  // 删除成功后重定向到管理员设置页面
     } catch (err) {
