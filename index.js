@@ -23,10 +23,15 @@ const homeworkRoute = require('./r/homework');
 const setPasswordRoute = require('./r/set-password');
 const userRoute = require('./r/user');  // 导入 user 路由
 
+// 这里设置了管理员和普通用户的仪表盘路由
 app.use('/', homeworkRoute);
 app.use('/setc', setcRoute);
-app.use('/setc/user', userRoute);  // 更新为 /setc/user 路由
+app.use('/setc/user', userRoute);  // 将用户管理路由挂载到 /setc/user
 app.use('/set-password', setPasswordRoute);
+
+// 管理员和普通用户的仪表盘路径
+app.use('/setc/admin-dashboard', setcRoute);  // 添加管理员仪表盘路径
+app.use('/setc/user-dashboard', setcRoute);  // 添加普通用户仪表盘路径
 
 // Database table setup
 const { checkAndCreateTables } = require('./r/db');
