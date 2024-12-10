@@ -37,14 +37,12 @@ router.get('/admin-dashboard', async (req, res) => {
         const role = await getUserRole(user);
 
         // 确保是管理员角色
-        let storedHash;
-        if (role === 'admin') {
-            storedHash = await getPasswordHash();  // 获取管理员密码哈希
-        } else {
-            return res.status(403).send('无效的管理员密码。');
+        if (role !== 'admin') {
+            return res.status(403).send('无效的管理员权限。');
         }
 
-        // 验证密码
+        // 获取管理员密码哈希并验证
+        const storedHash = await getPasswordHash(user);  // 获取管理员密码哈希
         const isValid = await bcrypt.compare(password, storedHash);
         if (!isValid) {
             return res.status(403).send('无效的管理员密码。');
