@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
-    max: 10,
+    max: 10,  // 可根据需求调整
     idleTimeoutMillis: 30000,
 });
 
@@ -30,8 +30,8 @@ const createUsersTableQuery = `
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,  -- Add password field here
-        role TEXT NOT NULL DEFAULT 'user'  -- 'admin' or 'user'
+        password TEXT NOT NULL,  // 存储用户的密码哈希
+        role TEXT NOT NULL DEFAULT 'user'  // 'admin' 或 'user'
     );
 `;
 
@@ -72,17 +72,17 @@ const ensureAdminUserExists = async () => {
     }
 };
 
-// 获取密码哈希值
-const getPasswordHash = async () => {
+// 获取用户密码哈希
+const getUserPassword = async (username) => {
     try {
-        const result = await pool.query('SELECT hash FROM password LIMIT 1');
+        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
         if (result.rows.length > 0) {
-            return result.rows[0].hash;
+            return result.rows[0].password;  // 返回用户的密码哈希
         } else {
-            throw new Error('No password hash found in database.');
+            throw new Error(`User '${username}' not found`);  // 确保找不到用户时抛出错误
         }
     } catch (err) {
-        console.error('Error retrieving password hash:', err);
+        console.error('Error retrieving user password:', err);
         throw err;
     }
 };
@@ -98,21 +98,6 @@ const getUserRole = async (username) => {
         }
     } catch (err) {
         console.error('Error retrieving user role:', err);
-        throw err;
-    }
-};
-
-// 获取用户密码哈希
-const getUserPassword = async (username) => {
-    try {
-        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
-        if (result.rows.length > 0) {
-            return result.rows[0].password;  // 返回用户的密码哈希
-        } else {
-            throw new Error(`User '${username}' not found`);  // 确保找不到用户时抛出错误
-        }
-    } catch (err) {
-        console.error('Error retrieving user password:', err);
         throw err;
     }
 };
@@ -135,6 +120,25 @@ const deleteUser = async (username) => {
     await pool.query('DELETE FROM users WHERE username = $1', [username]);
 };
 
+// 用户验证函数
+const validateUser = async (username, password) => {
+    try {
+        // 获取用户的密码哈希
+        const storedHash = await getUserPassword(username);
+        // 使用 bcrypt.compare 验证密码
+        const isValid = await bcrypt.compare(password, storedHash);
+
+        if (!isValid) {
+            throw new Error('Invalid password');
+        }
+
+        return true;  // 密码验证成功
+    } catch (error) {
+        console.error('User validation failed:', error);
+        throw new Error('Login failed');
+    }
+};
+
 module.exports = { 
     pool, 
     checkAndCreateTables, 
@@ -143,5 +147,6 @@ module.exports = {
     createUser, 
     deleteUser, 
     getUserRole, 
-    getUserPassword 
+    getUserPassword,
+    validateUser  // 导出 validateUser 函数
 };
