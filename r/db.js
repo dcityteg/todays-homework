@@ -72,6 +72,21 @@ const ensureAdminUserExists = async () => {
     }
 };
 
+// 获取密码哈希值
+const getPasswordHash = async () => {
+    try {
+        const result = await pool.query('SELECT hash FROM password LIMIT 1');
+        if (result.rows.length > 0) {
+            return result.rows[0].hash;
+        } else {
+            throw new Error('No password hash found in database.');
+        }
+    } catch (err) {
+        console.error('Error retrieving password hash:', err);
+        throw err;
+    }
+};
+
 // 获取用户密码哈希
 const getUserPassword = async (username) => {
     try {
