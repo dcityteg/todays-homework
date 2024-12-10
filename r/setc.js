@@ -37,12 +37,14 @@ router.get('/admin-dashboard', async (req, res) => {
         const role = await getUserRole(user);
 
         // 确保是管理员角色
-        if (role !== 'admin') {
-            return res.status(403).send('无效的管理员权限。');
+        let storedHash;
+        if (role === 'admin') {
+            storedHash = await getPasswordHash();  // 获取管理员密码哈希
+        } else {
+            return res.status(403).send('无效的管理员密码。');
         }
 
-        // 获取管理员密码哈希并验证
-        const storedHash = await getPasswordHash(user);  // 获取管理员密码哈希
+        // 验证密码
         const isValid = await bcrypt.compare(password, storedHash);
         if (!isValid) {
             return res.status(403).send('无效的管理员密码。');
@@ -89,7 +91,7 @@ router.get('/admin-dashboard', async (req, res) => {
 });
 
 // 处理管理员仪表盘的 POST 请求
-router.post('/admin-dashboard', async (req, res) => {
+router.post('/admin-dashboard', upload.array('images'), async (req, res) => {
     const { homework } = req.body;
 
     // 检查提交的作业内容
@@ -199,7 +201,7 @@ router.get('/user-dashboard', async (req, res) => {
 });
 
 // 处理普通用户仪表盘的 POST 请求
-router.post('/user-dashboard', async (req, res) => {
+router.post('/user-dashboard', upload.array('images'), async (req, res) => {
     const { homework } = req.body;
 
     // 检查提交的作业内容
