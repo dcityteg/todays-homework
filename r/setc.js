@@ -1,4 +1,3 @@
-// /r/setc.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const { getPasswordHash, getUserRole, getUserPassword } = require('./db');
@@ -112,7 +111,7 @@ router.get('/admin-dashboard', async (req, res) => {
                         <option value="admin">管理员</option>
                     </select>
                     <br><br>
-                    <label for="password">请输入管理员密码:</label>
+                    <label for="adminPassword">请输入管理员密码:</label>
                     <input type="password" name="adminPassword" required />
                     <br><br>
                     <button type="submit">创建用户</button>
