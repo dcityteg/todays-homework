@@ -94,7 +94,7 @@ const getUserRole = async (username) => {
         if (result.rows.length > 0) {
             return result.rows[0].role;
         } else {
-            return 'user';  // 默认普通用户
+            throw new Error(`User '${username}' not found`);
         }
     } catch (err) {
         console.error('Error retrieving user role:', err);
@@ -109,7 +109,7 @@ const getUserPassword = async (username) => {
         if (result.rows.length > 0) {
             return result.rows[0].password;  // 返回用户的密码哈希
         } else {
-            throw new Error('User not found');
+            throw new Error(`User '${username}' not found`);  // 确保找不到用户时抛出错误
         }
     } catch (err) {
         console.error('Error retrieving user password:', err);
