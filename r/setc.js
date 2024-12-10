@@ -1,12 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash, getUserRole, getUserPassword } = require('./db');
+const { getPasswordHash, getUserRole, getUserPassword, updatePassword, validateUser } = require('./db');
 const pool = require('./db').pool;
-const upload = require('./multer'); // 确保 multer 被正确配置
+const upload = require('./multer');  // 确保 multer 被正确配置
 const router = express.Router();
-
-// 定义 /user-dashboard 路由的密码
-const userDashboardPassword = '123abc';  // 测试用硬编码密码
 
 // 管理员仪表盘路由
 router.get('/admin-dashboard', async (req, res) => {
@@ -71,7 +68,7 @@ router.get('/admin-dashboard', async (req, res) => {
             </head>
             <body>
                 <h1>管理员仪表盘</h1>
-                <form method="POST" action="/setc" enctype="multipart/form-data">
+                <form method="POST" action="/setc/admin-dashboard" enctype="multipart/form-data">
                     <textarea id="homework" name="homework" rows="10" cols="50">${homework}</textarea>
                     <br>
                     <button type="button" onclick="insertAtCursor('homework', '[image]')">插入已上传图片</button>
@@ -90,6 +87,43 @@ router.get('/admin-dashboard', async (req, res) => {
     } catch (error) {
         console.error('错误:', error);
         res.status(500).send('服务器内部错误');
+    }
+});
+
+// 处理管理员仪表盘的 POST 请求
+router.post('/admin-dashboard', async (req, res) => {
+    const { homework } = req.body;
+
+    // 检查提交的作业内容
+    if (!homework) {
+        return res.status(400).send('作业内容不能为空');
+    }
+
+    try {
+        // 更新作业内容到数据库
+        const result = await pool.query('UPDATE homework SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *', [homework, 1]);
+        const updatedHomework = result.rows[0];
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="zh-CN">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>管理员仪表盘</title>
+            </head>
+            <body>
+                <h1>作业更新成功</h1>
+                <h2>新作业内容:</h2>
+                <p>${updatedHomework.content}</p>
+                <h3>最后更改时间:</h3>
+                <p>${new Date(updatedHomework.updated_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</p>
+            </body>
+            </html>
+        `);
+    } catch (error) {
+        console.error('错误:', error);
+        res.status(500).send('更新作业时发生错误');
     }
 });
 
@@ -121,7 +155,7 @@ router.get('/user-dashboard', async (req, res) => {
     }
 
     // 验证密码是否与硬编码的用户密码匹配
-    if (password !== userDashboardPassword) {
+    if (password !== '123abc') {
         return res.status(403).send('无效的用户密码。');
     }
 
@@ -144,7 +178,7 @@ router.get('/user-dashboard', async (req, res) => {
             </head>
             <body>
                 <h1>普通用户仪表盘</h1>
-                <form method="POST" action="/setc" enctype="multipart/form-data">
+                <form method="POST" action="/setc/user-dashboard" enctype="multipart/form-data">
                     <textarea id="homework" name="homework" rows="10" cols="50">${homework}</textarea>
                     <br>
                     <button type="button" onclick="insertAtCursor('homework', '[image]')">插入已上传图片</button>
@@ -163,6 +197,43 @@ router.get('/user-dashboard', async (req, res) => {
     } catch (error) {
         console.error('错误:', error);
         res.status(500).send('服务器内部错误');
+    }
+});
+
+// 处理普通用户仪表盘的 POST 请求
+router.post('/user-dashboard', async (req, res) => {
+    const { homework } = req.body;
+
+    // 检查提交的作业内容
+    if (!homework) {
+        return res.status(400).send('作业内容不能为空');
+    }
+
+    try {
+        // 更新作业内容到数据库
+        const result = await pool.query('UPDATE homework SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *', [homework, 1]);
+        const updatedHomework = result.rows[0];
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="zh-CN">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>普通用户仪表盘</title>
+            </head>
+            <body>
+                <h1>作业更新成功</h1>
+                <h2>新作业内容:</h2>
+                <p>${updatedHomework.content}</p>
+                <h3>最后更改时间:</h3>
+                <p>${new Date(updatedHomework.updated_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</p>
+            </body>
+            </html>
+        `);
+    } catch (error) {
+        console.error('错误:', error);
+        res.status(500).send('更新作业时发生错误');
     }
 });
 
