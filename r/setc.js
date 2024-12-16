@@ -28,6 +28,33 @@ function clearLoginCookie(res) {
     res.clearCookie('user');
 }
 
+// /setc/ver 路由：生成校验码
+router.get('/ver', (req, res) => {
+    const { no } = req.query;
+
+    if (!no || isNaN(no) || no < 1 || no > 100) {
+        return res.status(400).send('无效的no参数，必须是1到100之间的数字');
+    }
+
+    // 生成校验码
+    const verificationCode = generateVerificationCode(Number(no));
+
+    res.send(`
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>当前校验码</title>
+        </head>
+        <body>
+            <h1>当前校验码</h1>
+            <p>no参数: ${no}</p>
+            <p>校验码: ${verificationCode}</p>
+        </body>
+        </html>
+    `);
+});
+
 // 管理员仪表盘路由
 router.get('/admin-dashboard', async (req, res) => {
     const { user, password, no } = req.query;
