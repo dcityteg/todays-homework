@@ -60,9 +60,9 @@ router.get('/admin-dashboard', async (req, res) => {
     const { user, password, no, code } = req.query;
 
     // 校验用户是否已登录
-    if (!req.cookies.user || req.cookies.user !== user) {
-        return res.status(401).send('请先登录');
-    }
+    //if (!req.cookies.user || req.cookies.user !== user) {
+    //    return res.status(401).send('请先登录');
+    //}
 
     // 如果没有提供用户名、密码或校验码，提示用户输入
     if (!user || !password || !no || !code) {
