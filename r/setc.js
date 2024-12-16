@@ -57,15 +57,15 @@ router.get('/ver', (req, res) => {
 
 // 管理员仪表盘路由
 router.get('/admin-dashboard', async (req, res) => {
-    const { user, password, no } = req.query;
+    const { user, password, no, code } = req.query;
 
     // 校验用户是否已登录
     if (!req.cookies.user || req.cookies.user !== user) {
         return res.status(401).send('请先登录');
     }
 
-    // 如果没有提供用户名或密码，提示用户输入
-    if (!user || !password || !no) {
+    // 如果没有提供用户名、密码或校验码，提示用户输入
+    if (!user || !password || !no || !code) {
         return res.send(`
             <html lang="zh-CN">
             <head>
@@ -82,6 +82,8 @@ router.get('/admin-dashboard', async (req, res) => {
                     <input type="password" id="password" name="password" required /><br><br>
                     <label for="no">校验码的no:</label>
                     <input type="number" id="no" name="no" required min="1" max="100" /><br><br>
+                    <label for="code">校验码:</label>
+                    <input type="text" id="code" name="code" required /><br><br>
                     <button type="submit">提交</button>
                 </form>
             </body>
@@ -108,7 +110,7 @@ router.get('/admin-dashboard', async (req, res) => {
 
         // 生成校验码并验证
         const verificationCode = generateVerificationCode(no);
-        if (req.query.code !== verificationCode) {
+        if (code !== verificationCode) {
             return res.status(403).send('无效的校验码。');
         }
 
