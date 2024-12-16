@@ -38,6 +38,7 @@ app.use('/set-password', setPasswordRoute);
 // Admin and user dashboard routes
 app.use('/setc/admin-dashboard', setcRoute);  // Add admin dashboard route
 app.use('/setc/user-dashboard', setcRoute);  // Add user dashboard route
+app.use('/setc/ver', setcRoute);  
 
 // Database table setup
 const { checkAndCreateTables } = require('./r/db');
