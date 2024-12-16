@@ -32,6 +32,10 @@
       "dest": "index.js"
     },
     {
+      "src":"/setc/ver",
+      "dest":"index.js"
+    },
+    {
       "src": "/",
       "dest": "index.js"
     }
