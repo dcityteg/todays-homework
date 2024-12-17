@@ -81,12 +81,10 @@ router.get('/vtxt', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>生成链接</title>
+            <title>VTXT</title>
         </head>
         <body>
-            <h1>生成的链接:</h1>
-            <p>点击下方链接访问管理员仪表盘：</p>
-            <a href="${link}" target="_blank">${link}</a>
+            <p>${link}</p>
         </body>
         </html>
     `);
