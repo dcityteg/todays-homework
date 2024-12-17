@@ -31,7 +31,7 @@ function clearLoginCookie(res) {
     res.clearCookie('user');
 }
 
-// /setc/ver 路由：生成并展示校验码及其哈希值
+// /setc/ver 路由：生成并展示校验码
 router.get('/ver', async (req, res) => {
     const { no } = req.query;
 
@@ -39,8 +39,8 @@ router.get('/ver', async (req, res) => {
         return res.status(400).send('无效的no参数，必须是1到100之间的数字');
     }
 
-    // 生成校验码及哈希值
-    const { verificationCode, hashedCode } = await generateVerificationCode(Number(no));
+    // 生成校验码
+    const { verificationCode } = await generateVerificationCode(Number(no));
 
     res.send(`
         <html lang="zh-CN">
@@ -53,7 +53,6 @@ router.get('/ver', async (req, res) => {
             <h1>当前校验码</h1>
             <p>no参数: ${no}</p>
             <p>校验码: ${verificationCode}</p>
-            <p>校验码的哈希值: ${hashedCode}</p>
         </body>
         </html>
     `);
@@ -90,7 +89,7 @@ router.get('/admin-dashboard', async (req, res) => {
         // 生成校验码的哈希值
         const { hashedCode } = await generateVerificationCode(Number(no));
 
-        // 校验输入的校验码哈希值
+        // 比较输入的校验码的哈希值前 10 位
         const isCodeValid = await bcrypt.compare(code, hashedCode);
         if (!isCodeValid) {
             return res.status(403).send('无效的校验码。');
