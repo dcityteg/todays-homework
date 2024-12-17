@@ -1,12 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash, getUserRole, getUserPassword, updatePassword, validateUser } = require('./db');
-const pool = require('./db').pool;
+const { pool } = require('./db');
 const upload = require('./multer');  // 确保 multer 被正确配置
 const router = express.Router();
 
 // 校验码生成函数
-function generateVerificationCode(no) {
+async function generateVerificationCode(no) {
     const currentDate = new Date();
     let minutes = currentDate.getMinutes();
     minutes = Math.floor(minutes / 10) * 10;
@@ -15,7 +14,11 @@ function generateVerificationCode(no) {
     currentDate.setMilliseconds(0);
 
     let verificationCode = (currentDate.getTime() / 1000 + no) % 10000;
-    return verificationCode.toString().padStart(4, '0');
+    verificationCode = verificationCode.toString().padStart(4, '0');
+
+    // 哈希校验码
+    const hashedCode = await bcrypt.hash(verificationCode, 10);
+    return { verificationCode, hashedCode };
 }
 
 // 设置登录cookie
@@ -28,16 +31,16 @@ function clearLoginCookie(res) {
     res.clearCookie('user');
 }
 
-// /setc/ver 路由：生成校验码
-router.get('/ver', (req, res) => {
+// /setc/ver 路由：生成并展示校验码及其哈希值
+router.get('/ver', async (req, res) => {
     const { no } = req.query;
 
     if (!no || isNaN(no) || no < 1 || no > 100) {
         return res.status(400).send('无效的no参数，必须是1到100之间的数字');
     }
 
-    // 生成校验码
-    const verificationCode = generateVerificationCode(Number(no));
+    // 生成校验码及哈希值
+    const { verificationCode, hashedCode } = await generateVerificationCode(Number(no));
 
     res.send(`
         <html lang="zh-CN">
@@ -50,6 +53,7 @@ router.get('/ver', (req, res) => {
             <h1>当前校验码</h1>
             <p>no参数: ${no}</p>
             <p>校验码: ${verificationCode}</p>
+            <p>校验码的哈希值: ${hashedCode}</p>
         </body>
         </html>
     `);
@@ -57,15 +61,10 @@ router.get('/ver', (req, res) => {
 
 // 管理员仪表盘路由
 router.get('/admin-dashboard', async (req, res) => {
-    const { user, password, no, code } = req.query;
+    const { no, code } = req.query;
 
-    // 校验用户是否已登录
-    //if (!req.cookies.user || req.cookies.user !== user) {
-    //    return res.status(401).send('请先登录');
-    //}
-
-    // 如果没有提供用户名、密码或校验码，提示用户输入
-    if (!user || !password || !no || !code) {
+    // 如果没有提供校验码或no参数，提示用户输入
+    if (!no || !code) {
         return res.send(`
             <html lang="zh-CN">
             <head>
@@ -74,12 +73,8 @@ router.get('/admin-dashboard', async (req, res) => {
                 <title>管理员登录</title>
             </head>
             <body>
-                <h1>请输入用户名、密码和校验码</h1>
+                <h1>请输入校验码</h1>
                 <form method="GET" action="/setc/admin-dashboard">
-                    <label for="user">用户名:</label>
-                    <input type="text" id="user" name="user" required /><br><br>
-                    <label for="password">密码:</label>
-                    <input type="password" id="password" name="password" required /><br><br>
                     <label for="no">校验码的no:</label>
                     <input type="number" id="no" name="no" required min="1" max="100" /><br><br>
                     <label for="code">校验码:</label>
@@ -92,30 +87,17 @@ router.get('/admin-dashboard', async (req, res) => {
     }
 
     try {
-        // 获取用户角色
-        const role = await getUserRole(user);
+        // 生成校验码的哈希值
+        const { hashedCode } = await generateVerificationCode(Number(no));
 
-        if (role !== 'admin') {
-            return res.status(403).send('无效的管理员密码。');
-        }
-
-        // 获取管理员密码哈希
-        const storedHash = await getPasswordHash();
-
-        // 验证密码
-        const isValid = await bcrypt.compare(password, storedHash);
-        if (!isValid) {
-            return res.status(403).send('无效的管理员密码。');
-        }
-
-        // 生成校验码并验证
-        const verificationCode = generateVerificationCode(no);
-        if (code !== verificationCode) {
+        // 校验输入的校验码哈希值
+        const isCodeValid = await bcrypt.compare(code, hashedCode);
+        if (!isCodeValid) {
             return res.status(403).send('无效的校验码。');
         }
 
         // 登录成功，设置cookie
-        setLoginCookie(res, user);
+        setLoginCookie(res, 'admin');  // 假设为管理员用户，直接设置登录cookie
 
         // 查询作业内容和最后更新时间
         const homeworkResult = await pool.query('SELECT content, updated_at FROM homework WHERE id = $1', [1]);
