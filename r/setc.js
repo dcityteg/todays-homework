@@ -64,6 +64,34 @@ router.get('/ver', async (req, res) => {
     `);
 });
 
+// 新增 /vtxt 路由：返回一个包含动态参数的链接
+router.get('/vtxt', (req, res) => {
+    const { no, code } = req.query;
+
+    // 检查 no 和 code 参数
+    if (!no || !code) {
+        return res.status(400).send('缺少必要的参数：no 或 code');
+    }
+
+    // 构造返回的 URL
+    const link = `https://todo.xodi.top/setc/admin-dashboard?no=${no}&code=${code}`;
+
+    res.send(`
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>生成链接</title>
+        </head>
+        <body>
+            <h1>生成的链接:</h1>
+            <p>点击下方链接访问管理员仪表盘：</p>
+            <a href="${link}" target="_blank">${link}</a>
+        </body>
+        </html>
+    `);
+});
+
 // 管理员仪表盘路由
 router.get('/admin-dashboard', async (req, res) => {
     const { no, code } = req.query;
