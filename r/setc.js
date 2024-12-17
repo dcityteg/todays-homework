@@ -108,7 +108,7 @@ router.get('/vtxt', (req, res) => {
 });
 
 // 管理员仪表盘路由，添加登录验证
-router.get('/admin-dashboard', checkLogin, async (req, res) => {
+router.get('/admin-dashboard', async (req, res) => {
     const { no, code } = req.query;
 
     // 如果没有提供校验码哈希值或no参数，提示用户输入
