@@ -1,11 +1,11 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const { pool } = require('./db');
 const upload = require('./multer');  // 确保 multer 被正确配置
 const router = express.Router();
 
 // 校验码生成函数
-async function generateVerificationCode(no) {
+function generateVerificationCode(no) {
     const currentDate = new Date();
     let minutes = currentDate.getMinutes();
     minutes = Math.floor(minutes / 10) * 10;
@@ -16,11 +16,13 @@ async function generateVerificationCode(no) {
     let verificationCode = (currentDate.getTime() / 1000 + no) % 10000;
     verificationCode = verificationCode.toString().padStart(4, '0');
 
-    // 哈希校验码
-    const hashedCode = await bcrypt.hash(verificationCode, 10);
+    // 使用 SHA-1 加密校验码
+    const sha1Hash = crypto.createHash('sha1');
+    sha1Hash.update(verificationCode);
+    const hashedCode = sha1Hash.digest('hex');
 
-    // 截取哈希值的前15位
-    const truncatedHashedCode = hashedCode.substring(0, 15);
+    // 截取前16位
+    const truncatedHashedCode = hashedCode.substring(0, 16);
 
     return { verificationCode, hashedCode: truncatedHashedCode };
 }
@@ -44,7 +46,7 @@ router.get('/ver', async (req, res) => {
     }
 
     // 生成校验码及其哈希值
-    const { hashedCode } = await generateVerificationCode(Number(no));
+    const { hashedCode } = generateVerificationCode(Number(no));
 
     res.send(`
         <html lang="zh-CN">
@@ -91,10 +93,10 @@ router.get('/admin-dashboard', async (req, res) => {
 
     try {
         // 生成校验码的哈希值
-        const { hashedCode } = await generateVerificationCode(Number(no));
+        const { hashedCode } = generateVerificationCode(Number(no));
 
-        // 截取输入的哈希值的前15位
-        const truncatedInputCode = code.substring(0, 15);
+        // 截取输入的哈希值的前16位
+        const truncatedInputCode = code.substring(0, 16);
 
         // 比较截取后的哈希值
         if (truncatedInputCode !== hashedCode) {
