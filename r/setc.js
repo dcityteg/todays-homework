@@ -90,7 +90,8 @@ router.get('/admin-dashboard', async (req, res) => {
         const { hashedCode } = await generateVerificationCode(Number(no));
 
         // 比较输入的哈希值
-        if (code !== hashedCode) {
+        const isValid = await bcrypt.compare(code, hashedCode);
+        if (!isValid) {
             return res.status(403).send('无效的校验码哈希值。');
         }
 
