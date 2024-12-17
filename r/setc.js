@@ -41,14 +41,6 @@ function clearLoginCookie(res) {
     res.clearCookie('user');
 }
 
-// 登录状态检查中间件
-function checkLogin(req, res, next) {
-    if (!req.cookies.user) {
-        return res.redirect('/setc/admin-dashboard');
-    }
-    next();
-}
-
 // /setc/ver 路由：生成并展示校验码的哈希值
 router.get('/ver', async (req, res) => {
     const { no } = req.query;
@@ -110,32 +102,34 @@ router.get('/vtxt', (req, res) => {
 // 管理员仪表盘路由，添加登录验证
 router.get('/admin-dashboard', async (req, res) => {
     const { no, code } = req.query;
+    const user = req.cookies.user;
 
-    // 如果没有提供校验码哈希值或no参数，提示用户输入
-    if (!no || !code) {
-        return res.send(`
-            <html lang="zh-CN">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>管理员登录</title>
-            </head>
-            <body>
-                <h1>请输入校验码哈希值</h1>
-                <form method="GET" action="/setc/admin-dashboard">
-                    <label for="no">校验码的no:</label>
-                    <input type="number" id="no" name="no" required min="1" max="100" /><br><br>
-                    <label for="code">校验码的哈希值:</label>
-                    <input type="text" id="code" name="code" required /><br><br>
-                    <button type="submit">提交</button>
-                </form>
-            </body>
-            </html>
-        `);
-    }
+    // 如果没有登录(cookie不存在)，展示输入框
+    if (!user) {
+        // 如果没有提供校验码哈希值或no参数，提示用户输入
+        if (!no || !code) {
+            return res.send(`
+                <html lang="zh-CN">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>管理员登录</title>
+                </head>
+                <body>
+                    <h1>请输入校验码哈希值</h1>
+                    <form method="GET" action="/setc/admin-dashboard">
+                        <label for="no">校验码的no:</label>
+                        <input type="number" id="no" name="no" required min="1" max="100" /><br><br>
+                        <label for="code">校验码的哈希值:</label>
+                        <input type="text" id="code" name="code" required /><br><br>
+                        <button type="submit">提交</button>
+                    </form>
+                </body>
+                </html>
+            `);
+        }
 
-    try {
-        // 生成校验码的哈希值
+        // 如果有 no 和 code 参数，验证哈希值
         const { hashedCode } = generateVerificationCode(Number(no));
 
         // 截取输入的哈希值的前16位
@@ -146,10 +140,12 @@ router.get('/admin-dashboard', async (req, res) => {
             return res.status(403).send('无效的校验码哈希值');
         }
 
-        // 登录成功，设置cookie
+        // 校验成功，设置登录cookie
         setLoginCookie(res, 'admin');  // 假设为管理员用户，直接设置登录cookie
+    }
 
-        // 查询作业内容和最后更新时间
+    // 如果已经登录，直接进入控制台，查询作业内容和最后更新时间
+    try {
         const homeworkResult = await pool.query('SELECT content, updated_at FROM homework WHERE id = $1', [1]);
         let homework = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].content : '';
         const updatedAt = homeworkResult.rows.length > 0 ? homeworkResult.rows[0].updated_at : null;
