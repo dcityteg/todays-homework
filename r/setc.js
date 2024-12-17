@@ -62,7 +62,7 @@ router.get('/ver', async (req, res) => {
 router.get('/admin-dashboard', async (req, res) => {
     const { no, code } = req.query;
 
-    // 如果没有提供校验码或no参数，提示用户输入
+    // 如果没有提供校验码哈希值或no参数，提示用户输入
     if (!no || !code) {
         return res.send(`
             <html lang="zh-CN">
@@ -72,11 +72,11 @@ router.get('/admin-dashboard', async (req, res) => {
                 <title>管理员登录</title>
             </head>
             <body>
-                <h1>请输入校验码</h1>
+                <h1>请输入校验码哈希值</h1>
                 <form method="GET" action="/setc/admin-dashboard">
                     <label for="no">校验码的no:</label>
                     <input type="number" id="no" name="no" required min="1" max="100" /><br><br>
-                    <label for="code">校验码:</label>
+                    <label for="code">校验码的哈希值:</label>
                     <input type="text" id="code" name="code" required /><br><br>
                     <button type="submit">提交</button>
                 </form>
@@ -89,10 +89,9 @@ router.get('/admin-dashboard', async (req, res) => {
         // 生成校验码的哈希值
         const { hashedCode } = await generateVerificationCode(Number(no));
 
-        // 比较输入的校验码的哈希值
-        const isCodeValid = await bcrypt.compare(code, hashedCode);
-        if (!isCodeValid) {
-            return res.status(403).send('无效的校验码。');
+        // 比较输入的哈希值
+        if (code !== hashedCode) {
+            return res.status(403).send('无效的校验码哈希值。');
         }
 
         // 登录成功，设置cookie
