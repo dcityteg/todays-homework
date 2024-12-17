@@ -20,7 +20,7 @@ async function generateVerificationCode(no) {
     const hashedCode = await bcrypt.hash(verificationCode, 10);
 
     // 截取哈希值的前15位
-    const truncatedHashedCode = hashedCode.substring(0, 15); 
+    const truncatedHashedCode = hashedCode.substring(0, 15);
 
     return { verificationCode, hashedCode: truncatedHashedCode };
 }
@@ -93,9 +93,12 @@ router.get('/admin-dashboard', async (req, res) => {
         // 生成校验码的哈希值
         const { hashedCode } = await generateVerificationCode(Number(no));
 
-        // 比较输入的哈希值
-        if (code !== hashedCode) {
-            return res.status(403).send('无效的校验码哈希值。');
+        // 截取输入的哈希值的前15位
+        const truncatedInputCode = code.substring(0, 15);
+
+        // 比较截取后的哈希值
+        if (truncatedInputCode !== hashedCode) {
+            return res.status(403).send('无效的校验码哈希值');
         }
 
         // 登录成功，设置cookie
