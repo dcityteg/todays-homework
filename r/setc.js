@@ -2,7 +2,11 @@ const express = require('express');
 const crypto = require('crypto');
 const { pool } = require('./db');
 const upload = require('./multer');  // 确保 multer 被正确配置
+const cookieParser = require('cookie-parser'); // 用于解析 cookies
 const router = express.Router();
+
+// 使用 cookieParser 中间件
+router.use(cookieParser());
 
 // 校验码生成函数
 function generateVerificationCode(no) {
@@ -37,6 +41,14 @@ function clearLoginCookie(res) {
     res.clearCookie('user');
 }
 
+// 登录状态检查中间件
+function checkLogin(req, res, next) {
+    if (!req.cookies.user) {
+        return res.redirect('/setc/admin-dashboard');
+    }
+    next();
+}
+
 // /setc/ver 路由：生成并展示校验码的哈希值
 router.get('/ver', async (req, res) => {
     const { no } = req.query;
@@ -66,34 +78,37 @@ router.get('/ver', async (req, res) => {
 
 // 新增 /vtxt 路由：返回一个包含动态参数的链接
 router.get('/vtxt', (req, res) => {
-    const { no} = req.query;
+    const { no } = req.query;
 
-    // 检查 no 和 code 参数
-    if (!no) {
-        return res.status(400).send('缺少必要的参数：no');
+    // 检查 no 参数
+    if (!no || isNaN(no) || no < 1 || no > 100) {
+        return res.status(400).send('无效的no参数，必须是1到100之间的数字');
     }
 
-    const { code } = generateVerificationCode(Number(no));
+    // 使用 no 参数生成对应的校验码哈希值
+    const { hashedCode } = generateVerificationCode(Number(no));
 
     // 构造返回的 URL
-    const link = `https://todo.xodi.top/setc/admin-dashboard?no=${no}&code=${code}`;
+    const link = `https://todo.xodi.top/setc/admin-dashboard?no=${no}&code=${hashedCode}`;
 
     res.send(`
         <html lang="zh-CN">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>VTXT</title>
+            <title>生成链接</title>
         </head>
         <body>
-            <p>${link}</p>
+            <h1>生成的链接:</h1>
+            <p>点击下方链接访问管理员仪表盘：</p>
+            <a href="${link}" target="_blank">${link}</a>
         </body>
         </html>
     `);
 });
 
-// 管理员仪表盘路由
-router.get('/admin-dashboard', async (req, res) => {
+// 管理员仪表盘路由，添加登录验证
+router.get('/admin-dashboard', checkLogin, async (req, res) => {
     const { no, code } = req.query;
 
     // 如果没有提供校验码哈希值或no参数，提示用户输入
