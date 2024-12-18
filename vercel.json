@@ -8,35 +8,23 @@
   ],
   "routes": [
     {
-      "src": "/setc",
+      "src": "/pannel",
       "dest": "index.js"
     },
     {
-      "src": "/homework",
+      "src": "/pannel/user.*",
       "dest": "index.js"
     },
     {
-      "src": "/set-password",
+      "src": "/pannel",
       "dest": "index.js"
     },
     {
-      "src": "/setc/user.*",
+      "src": "/pannel",
       "dest": "index.js"
     },
     {
-      "src": "/setc/admin-dashboard",
-      "dest": "index.js"
-    },
-    {
-      "src": "/setc/user-dashboard",
-      "dest": "index.js"
-    },
-    {
-      "src":"/setc/ver",
-      "dest":"index.js"
-    },
-    {
-      "src":"/setc/vtxt",
+      "src":"/pannel/vtxt",
       "dest":"index.js"
     },
     {
