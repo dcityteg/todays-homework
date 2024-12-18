@@ -41,33 +41,6 @@ function clearLoginCookie(res) {
     res.clearCookie('user');
 }
 
-// /setc/ver 路由：生成并展示校验码的哈希值
-router.get('/ver', async (req, res) => {
-    const { no } = req.query;
-
-    if (!no || isNaN(no) || no < 1 || no > 100) {
-        return res.status(400).send('无效的no参数，必须是1到100之间的数字');
-    }
-
-    // 生成校验码及其哈希值
-    const { hashedCode } = generateVerificationCode(Number(no));
-
-    res.send(`
-        <html lang="zh-CN">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>当前校验码的哈希值</title>
-        </head>
-        <body>
-            <h1>当前校验码的哈希值</h1>
-            <p>no参数: ${no}</p>
-            <p>校验码的哈希值: ${hashedCode}</p>
-        </body>
-        </html>
-    `);
-});
-
 // 新增 /vtxt 路由：返回一个包含动态参数的链接
 router.get('/vtxt', (req, res) => {
     const { no } = req.query;
@@ -81,7 +54,7 @@ router.get('/vtxt', (req, res) => {
     const { hashedCode } = generateVerificationCode(Number(no));
 
     // 构造返回的 URL
-    const link = `https://todo.xodi.top/setc/admin-dashboard?no=${no}&code=${hashedCode}`;
+    const link = `https://todo.xodi.top/pannel?no=${no}&code=${hashedCode}`;
 
     res.send(`
         <html lang="zh-CN">
@@ -100,7 +73,7 @@ router.get('/vtxt', (req, res) => {
 });
 
 // 管理员仪表盘路由，添加登录验证
-router.get('/admin-dashboard', async (req, res) => {
+router.get('/', async (req, res) => {
     const { no, code } = req.query;
     const user = req.cookies.user;
 
@@ -117,7 +90,7 @@ router.get('/admin-dashboard', async (req, res) => {
                 </head>
                 <body>
                     <h1>请输入校验码哈希值</h1>
-                    <form method="GET" action="/setc/admin-dashboard">
+                    <form method="GET" action="/pannel">
                         <label for="no">校验码的no:</label>
                         <input type="number" id="no" name="no" required min="1" max="100" /><br><br>
                         <label for="code">校验码的哈希值:</label>
@@ -162,7 +135,7 @@ router.get('/admin-dashboard', async (req, res) => {
             </head>
             <body>
                 <h1>管理员仪表盘</h1>
-                <form method="POST" action="/setc/admin-dashboard" enctype="multipart/form-data">
+                <form method="POST" action="/pannel" enctype="multipart/form-data">
                     <textarea id="homework" name="homework" rows="10" cols="50">${homework}</textarea>
                     <br>
                     <button type="button" onclick="insertAtCursor('homework', '[image]')">插入已上传图片</button>
@@ -187,11 +160,11 @@ router.get('/admin-dashboard', async (req, res) => {
 // 退出登录
 router.get('/logout', (req, res) => {
     clearLoginCookie(res);
-    res.redirect('/setc/admin-dashboard');
+    res.redirect('/pannel');
 });
 
 // 处理管理员仪表盘的 POST 请求
-router.post('/admin-dashboard', upload.array('images'), async (req, res) => {
+router.post('/', upload.array('images'), async (req, res) => {
     const { homework } = req.body;
 
     // 检查提交的作业内容
