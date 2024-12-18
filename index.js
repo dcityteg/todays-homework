@@ -30,7 +30,6 @@ const homeworkRoute = require('./r/homework');
 // Dashboard routes for admin and user
 app.use('/', homeworkRoute);
 app.use('/pannel', pannelRoute);
-app.use('/set-password', setPasswordRoute);
 
 // Admin and user dashboard routes
 app.use('/pannel', pannelRoute);  // Add admin dashboard route
