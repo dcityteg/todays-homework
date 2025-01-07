@@ -1,22 +1,16 @@
 // /r/setc.js
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { getPasswordHash, getUserRole, updatePassword } = require('./db');
+const { getPasswordHash, getUserRole, getUserPassword } = require('./db'); // 引入 getUserPassword
 const pool = require('./db').pool;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-const upload = require('./multer');  // 导入 multer 配置
-=======
-=======
->>>>>>> parent of 03d290c (2.1.0)
-=======
->>>>>>> parent of 03d290c (2.1.0)
 const upload = require('./multer');
 const userRoute = require('./user');  // 导入 user 路由
->>>>>>> parent of 03d290c (2.1.0)
 const router = express.Router();
 
+// 使用 user 路由来处理用户管理
+router.use('/user', userRoute);
+
+// 管理员页面
 router.get('/', async (req, res) => {
     const { user, password } = req.query;
 
@@ -43,20 +37,25 @@ router.get('/', async (req, res) => {
         `);
     }
 
-    // 验证用户名和密码
+    // 获取用户角色
     const role = await getUserRole(user);
-    
-    // 管理员验证
-    const isAdmin = user === 'admin' && password === '114514';
-    if (!isAdmin && role !== 'admin') {
-        return res.status(403).send('Access denied. Only admin can manage users.');
-    }
 
-    // 验证密码
-    const storedHash = await getPasswordHash();
-    const isValidPassword = await bcrypt.compare(password, storedHash);
-    if (!isValidPassword) {
-        return res.status(403).send('Invalid password.');
+    // 获取管理员密码哈希
+    const storedAdminHash = await getPasswordHash();
+
+    // 验证管理员密码
+    if (role === 'admin') {
+        const isAdminValid = await bcrypt.compare(password, storedAdminHash);
+        if (!isAdminValid) {
+            return res.status(403).send('无效的管理员密码。');
+        }
+    } else {
+        // 获取用户的密码哈希
+        const storedUserHash = await getUserPassword(user);
+        const isUserValid = await bcrypt.compare(password, storedUserHash);
+        if (!isUserValid) {
+            return res.status(403).send('无效的用户密码。');
+        }
     }
 
     // 查询作业内容和最后更改时间
@@ -67,10 +66,11 @@ router.get('/', async (req, res) => {
     // 格式化时间（根据中国时区）
     const formattedUpdatedAt = updatedAt ? new Date(updatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '未设置作业';
 
-    // 如果是管理员，显示用户管理功能
-    if (isAdmin) {
-        const users = await pool.query('SELECT id, username, role FROM users');
+    // 获取所有用户
+    const users = await pool.query('SELECT id, username, role FROM users');
 
+    // 如果是管理员，显示用户管理功能
+    if (role === 'admin') {
         res.send(`
             <!DOCTYPE html>
             <html lang="zh-CN">
@@ -96,9 +96,31 @@ router.get('/', async (req, res) => {
                 <h3>用户列表：</h3>
                 <ul>
                     ${users.rows.map(user => `
-                        <li>${user.username} - 角色: ${user.role} <a href="/setc/change-role?user=${user.username}">修改角色</a></li>
+                        <li>${user.username} - 角色: ${user.role} 
+                            <a href="/setc/user/delete-user?username=${user.username}">删除</a>
+                        </li>
                     `).join('')}
                 </ul>
+
+                <h3>新建用户</h3>
+                <form method="POST" action="/setc/user/create-user">
+                    <label for="newUsername">用户名:</label>
+                    <input type="text" id="newUsername" name="username" required />
+                    <br><br>
+                    <label for="newPassword">密码:</label>
+                    <input type="password" id="newPassword" name="password" required />
+                    <br><br>
+                    <label for="newRole">角色:</label>
+                    <select name="role" id="newRole">
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                    <br><br>
+                    <label for="password">请输入管理员密码:</label>
+                    <input type="password" name="adminPassword" required />
+                    <br><br>
+                    <button type="submit">创建用户</button>
+                </form>
                 <hr>
                 <h2>Change Password</h2>
                 <form method="POST" action="/set-password">
@@ -144,43 +166,4 @@ router.get('/', async (req, res) => {
     `);
 });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-// 处理作业内容和图片上传
-router.post('/', upload.array('images', 3), async (req, res) => {
-    let homework = req.body.homework || '（无内容）';
-    const images = req.files;
-
-    try {
-        let updatedHomework = homework;
-
-        // 如果有上传的图片，将它们替换到作业内容中的占位符
-        images.forEach((image) => {
-            const imageMarkdown = `![image](data:image/png;base64,${image.buffer.toString('base64')})`;
-            updatedHomework = updatedHomework.replace('[image]', imageMarkdown);
-        });
-
-        // 更新数据库中的作业内容以及更新时间
-        await pool.query(
-            `INSERT INTO homework (id, content, updated_at) 
-             VALUES ($1, $2, CURRENT_TIMESTAMP)
-             ON CONFLICT (id) 
-             DO UPDATE SET content = $2, updated_at = CURRENT_TIMESTAMP;`,
-            [1, updatedHomework]
-        );
-
-        res.redirect('/');  // 提交成功后重定向到主页
-    } catch (err) {
-        console.error('保存作业内容或图片时出错:', err);
-        res.status(500).send('保存作业内容或图片时出错');
-    }
-});
-
-=======
->>>>>>> parent of 03d290c (2.1.0)
-=======
->>>>>>> parent of 03d290c (2.1.0)
-=======
->>>>>>> parent of 03d290c (2.1.0)
 module.exports = router;
