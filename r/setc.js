@@ -4,8 +4,11 @@ const bcrypt = require('bcrypt');
 const { getPasswordHash, getUserRole, updatePassword } = require('./db');
 const pool = require('./db').pool;
 <<<<<<< HEAD
+<<<<<<< HEAD
 const upload = require('./multer');  // 导入 multer 配置
 =======
+=======
+>>>>>>> parent of 03d290c (2.1.0)
 const upload = require('./multer');
 const userRoute = require('./user');  // 导入 user 路由
 >>>>>>> parent of 03d290c (2.1.0)
@@ -152,6 +155,7 @@ router.get('/', async (req, res) => {
 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // 处理作业内容和图片上传
 router.post('/', upload.array('images', 3), async (req, res) => {
     let homework = req.body.homework || '（无内容）';
@@ -182,6 +186,8 @@ router.post('/', upload.array('images', 3), async (req, res) => {
     }
 });
 
+=======
+>>>>>>> parent of 03d290c (2.1.0)
 =======
 >>>>>>> parent of 03d290c (2.1.0)
 module.exports = router;
