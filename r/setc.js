@@ -139,19 +139,6 @@ router.get('/', async (req, res) => {
             <hr>
             <h3>最后更改时间:</h3>
             <p>${formattedUpdatedAt}</p>
-                  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.0.0-beta.4/libs/cn/index.js"></script>
-            
-            <!-- AI Assistant Script Integration -->
-            <script>
-                new CozeWebSDK.WebChatClient({
-                    config: {
-                    bot_id: '7330973276627468288',
-                    },
-                    componentProps: {
-                    title: 'Coze',
-                    },
-                });
-            </script>
         </body>
         </html>
     `);
