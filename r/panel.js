@@ -115,7 +115,7 @@ router.get('/', async (req, res) => {
 
         // 校验成功，设置登录cookie
         setLoginCookie(res, 'admin');  // 假设为管理员用户，直接设置登录cookie
-    }
+    } 
 
     // 如果已经登录，直接进入控制台，查询作业内容和最后更新时间
     try {
