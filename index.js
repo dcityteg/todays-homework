@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');  // Import cookie-parser
 const path = require('path');
 const multer = require('multer');
 const { Pool } = require('pg');
@@ -10,11 +9,6 @@ const { marked } = require('marked');
 
 // App and Middleware setup
 const app = express();
-
-// Use cookie-parser to manage cookies
-app.use(cookieParser());  // Make sure to use cookie-parser before bodyParser
-
-// Middleware for parsing request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -24,20 +18,18 @@ const upload = require('./r/multer');
 const DOMPurifyInstance = DOMPurify(new JSDOM('').window);
 
 // Routes
-const pannelRoute = require('./r/pannel');
+const setcRoute = require('./r/setc');
 const homeworkRoute = require('./r/homework');
+const setPasswordRoute = require('./r/set-password');
+const userRoute = require('./r/user');  // 导入 user 路由
 
-// Dashboard routes for admin and user
 app.use('/', homeworkRoute);
-app.use('/pannel', pannelRoute);
-
-// Admin and user dashboard routes
-app.use('/pannel', pannelRoute);  // Add admin dashboard route
-app.use('/pannel/vtxt', pannelRoute);  
+app.use('/setc', setcRoute);
+app.use('/setc/user', userRoute);  // 更新为 /setc/user 路由
+app.use('/set-password', setPasswordRoute);
 
 // Database table setup
 const { checkAndCreateTables } = require('./r/db');
 checkAndCreateTables();
 
-// Export the app for use in other parts of the application
 module.exports = app;

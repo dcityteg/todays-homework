@@ -8,24 +8,20 @@
   ],
   "routes": [
     {
-      "src": "/pannel",
+      "src": "/setc",
       "dest": "index.js"
     },
     {
-      "src": "/pannel/user.*",
+      "src": "/homework",
       "dest": "index.js"
     },
     {
-      "src": "/pannel",
+      "src": "/set-password",
       "dest": "index.js"
     },
     {
-      "src": "/pannel",
+      "src": "/setc/user.*",
       "dest": "index.js"
-    },
-    {
-      "src":"/pannel/vtxt",
-      "dest":"index.js"
     },
     {
       "src": "/",
